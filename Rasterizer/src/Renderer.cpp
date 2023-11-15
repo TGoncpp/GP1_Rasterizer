@@ -373,7 +373,7 @@ void Renderer::Render_W1_4()
 void Renderer::Render_W1_5()
 {
 	//SDL_Rect rect = SDL_Rect{ 0, 0, m_Width, m_Height };
-	//SDL_FillRect(m_pBackBuffer, &rect, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+	SDL_FillRect(m_pBackBuffer, NULL, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
 
 	ColorRGB finalColor{  };
 
@@ -485,26 +485,6 @@ void dae::Renderer::Render_W2_1()
 	//World Space
 	std::vector<Mesh> meshes_world
 	{
-		Mesh
-		{
-			{
-				Vertex{{-3,  3, -2}},
-				Vertex{{ 0,  3, -2}},
-				Vertex{{ 3,  3, -2}},
-				Vertex{{-3,  0, -2}},
-				Vertex{{ 0,  0, -2}},
-				Vertex{{ 3,  0, -2}},
-				Vertex{{-3, -3, -2}},
-				Vertex{{ 0, -3, -2}},
-				Vertex{{ 3, -3, -2}}
-			},
-			{
-				3, 0, 1,    1, 4, 3,    4, 1, 2,
-				2, 5, 4,    6, 3, 4,    4, 7, 6,
-				7, 4, 5,    5, 8, 7
-			},
-			PrimitiveTopology::TriangleList
-		},
 		//Mesh
 		//{
 		//	{
@@ -519,12 +499,32 @@ void dae::Renderer::Render_W2_1()
 		//		Vertex{{ 3, -3, -2}}
 		//	},
 		//	{
-		//		3, 0, 4, 1, 5, 2,
-		//		2, 6,
-		//		6, 3, 7, 4, 8, 5
+		//		3, 0, 1,    1, 4, 3,    4, 1, 2,
+		//		2, 5, 4,    6, 3, 4,    4, 7, 6,
+		//		7, 4, 5,    5, 8, 7
 		//	},
-		//	PrimitiveTopology::TriangleStrip
-		//}
+		//	PrimitiveTopology::TriangleList
+		//},
+		Mesh
+		{
+			{
+				Vertex{{-3,  3, -2}},
+				Vertex{{ 0,  3, -2}},
+				Vertex{{ 3,  3, -2}},
+				Vertex{{-3,  0, -2}},
+				Vertex{{ 0,  0, -2}},
+				Vertex{{ 3,  0, -2}},
+				Vertex{{-3, -3, -2}},
+				Vertex{{ 0, -3, -2}},
+				Vertex{{ 3, -3, -2}}
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+			PrimitiveTopology::TriangleStrip
+		}
 	};
 
 	
@@ -630,7 +630,79 @@ void dae::Renderer::Render_W2_1()
 			break;
 
 			case PrimitiveTopology::TriangleStrip:
+				for (int px{}; px < m_Width; ++px)
+				{
+					for (int py{}; py < m_Height; ++py)
+					{
+						//pixel position and index
+						pxl++;
+						Vector2 pxlScr{ px + 0.5f, py + 0.5f };
 
+						////debug lines
+						//if (px > m_Width / 2 && py > m_Height / 2.5)
+						//{
+						//	std::cout << "het\n";
+						//}
+
+						//check if pixel in triangle for every triangle in mesh
+						for (size_t indc{ 0 }; indc < mesh.indices.size() - 2; indc++)
+						{
+							////check if in bounds -> check bounds for mesh ->works but its slower
+							//if (!IsInBoundingBox(pxlScr, indc, vector2_Screen, mesh))
+							//	continue;
+
+							//get area between vector  vertix i ->pixel and vertix i -> vertix i+1
+
+							float W2 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
+							float W0 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]);
+							float W1 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+
+							if (indc % 2 != 0)
+							{
+								W0 = -W0;
+								W1 = -W1;
+								W2 = -W2;
+							}
+							if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
+							{
+								const float sign{ (indc % 2 == 0) ? 1.f : -1.f };
+								const float W = sign * Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+
+								//Get avg depth DepthCheck
+								const float depth0 = W0 / W * vertices_NDC[mesh.indices[indc + 0]].position.z;
+								const float depth1 = W1 / W * vertices_NDC[mesh.indices[indc + 1]].position.z;
+								const float depth2 = W2 / W * vertices_NDC[mesh.indices[indc + 2]].position.z;
+								const float avgDepth{ (depth0 + depth1 + depth2) / 3.f };
+
+								//if pxl is closer to camera, give color of triangleVertex
+								if (m_pDepthBufferPixels[pxl] > avgDepth)
+								{
+									finalColor = {
+										W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.r + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.r + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.r,
+										W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.g + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.g + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.g,
+										W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.b + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.b + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.b
+
+									};
+									m_pDepthBufferPixels[pxl] = avgDepth;
+								}
+
+							}
+
+						}
+
+						//Update Color in Buffer
+						finalColor.MaxToOne();
+
+						m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+							static_cast<uint8_t>(finalColor.r * 255),
+							static_cast<uint8_t>(finalColor.g * 255),
+							static_cast<uint8_t>(finalColor.b * 255));
+
+
+						//reset for next pxl
+						finalColor = {};
+					}
+				}
 
 			ResetDepthBuffer();
 				break;
