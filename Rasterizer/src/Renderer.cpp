@@ -45,6 +45,7 @@ void Renderer::Render()
 	//@START
 	//Lock BackBuffer
 	SDL_LockSurface(m_pBackBuffer);
+	SDL_FillRect(m_pBackBuffer, NULL, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
 
 	//RENDER LOGIC
 	//IntroRender();
@@ -480,7 +481,6 @@ void Renderer::Render_W1_5()
 
 void dae::Renderer::Render_W2_1()
 {
-	ColorRGB finalColor{  };
 
 
 	//World Space
@@ -489,15 +489,15 @@ void dae::Renderer::Render_W2_1()
 		Mesh
 		{
 			{
-				Vertex{{-3,  4, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0,  4, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3,  4, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{-3, -2, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0, -2, -2}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3, -2, -2}, {0.0f, 1.f, 1.f}}
+				Vertex{{-3,  4, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 0,  4, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 3,  4, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{-3,  0, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 3,  0, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{-3, -2, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}},
+				Vertex{{ 3, -2, -3}, {0.0f, 1.f, 1.f}}
 			},
 			{
 				3, 0, 4, 1, 5, 2,
@@ -528,6 +528,7 @@ void dae::Renderer::Render_W2_1()
 		}
 	};
 
+	ColorRGB finalColor{  };
 	
 	//////////////////////////////////////////////////////////////////////////////////
 	//Check every Mesh
@@ -667,8 +668,10 @@ void dae::Renderer::Render_W2_1()
 								};
 								m_pDepthBufferPixels[pxl] = avgDepth;
 							}
-							
+
 						}
+						else
+							continue;
 						
 					
 					}//end for each pixel
@@ -681,7 +684,7 @@ void dae::Renderer::Render_W2_1()
 				finalColor.MaxToOne();
 
 				//if already colored and no closer hit from current pixel -> keep previous pixel 
-				if (finalColor == colors::Black && m_pDepthBufferPixels[pxl] < std::numeric_limits<float>::max() - 1.0f)
+				if (finalColor == colors::Black /*&& m_pDepthBufferPixels[pxl] < std::numeric_limits<float>::max() - 1.0f*/)
 					isColored = true;
 				else
 					isColored = false;
