@@ -578,9 +578,9 @@ void dae::Renderer::Render_W2_1()
 					//check for every triangle by its indices
 					for (size_t indc{ 0 }; indc < mesh.indices.size() ; indc += 3)
 					{
-						////check if in bounds -> check bounds for mesh -> need to fix
-						//if (!IsInBoundingBox(pxlScr, indc, vector2_Screen))
-						//	continue;
+						//check if in bounds -> check bounds for mesh ->works but its slower
+						if (!IsInBoundingBox(pxlScr, indc, vector2_Screen, mesh))
+							continue;
 
 						//get area between vector  vertix i ->pixel and vertix i -> vertix i+1
 						const float W2 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
@@ -659,6 +659,21 @@ bool dae::Renderer::IsInBoundingBox(const Vector2& pxlScr, size_t indc, const st
 								 std::min(std::min(vector2_Screen[indc].y, vector2_Screen[indc + 1].y), vector2_Screen[indc + 2].y) };
 	Vector2 bottomRight{ std::max(std::max(vector2_Screen[indc].x, vector2_Screen[indc + 1].x), vector2_Screen[indc + 2].x),
 						 std::max(std::max(vector2_Screen[indc].y, vector2_Screen[indc + 1].y), vector2_Screen[indc + 2].y) };
+
+	if ((pxlScr.x < topLeft.x || pxlScr.x > bottomRight.x) ||
+		(pxlScr.y < topLeft.y || pxlScr.y > bottomRight.y))
+		return false;
+	else
+		return true;
+
+}
+
+bool dae::Renderer::IsInBoundingBox(const Vector2& pxlScr, size_t index, const std::vector<Vector2>& vector2_Screen, const Mesh& mesh)
+{
+	Vector2 topLeft{ std::min(std::min(vector2_Screen [mesh.indices[index]] .x, vector2_Screen[mesh.indices[index + 1]].x), vector2_Screen[mesh.indices[index + 2]].x),
+									 std::min(std::min(vector2_Screen[mesh.indices[index ]].y, vector2_Screen[mesh.indices[index + 1]].y), vector2_Screen[mesh.indices[index + 2]].y) };
+	Vector2 bottomRight{ std::max(std::max(vector2_Screen[mesh.indices[index ]].x, vector2_Screen[mesh.indices[index + 1]].x), vector2_Screen[mesh.indices[index + 2]].x),
+						 std::max(std::max(vector2_Screen[mesh.indices[index ]].y, vector2_Screen[mesh.indices[index + 1]].y), vector2_Screen[mesh.indices[index + 2]].y) };
 
 	if ((pxlScr.x < topLeft.x || pxlScr.x > bottomRight.x) ||
 		(pxlScr.y < topLeft.y || pxlScr.y > bottomRight.y))

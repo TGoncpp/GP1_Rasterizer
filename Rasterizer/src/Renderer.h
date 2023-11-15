@@ -63,5 +63,6 @@ namespace dae
 
 		void ResetDepthBuffer();
 		bool IsInBoundingBox(const Vector2& pxlScr, size_t indc, const std::vector<Vector2>& vector2_Screen);
+		bool IsInBoundingBox(const Vector2& pxlScr, size_t indc, const std::vector<Vector2>& vector2_Screen, const Mesh& mesh);
 	};
 }
