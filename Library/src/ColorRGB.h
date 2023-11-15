@@ -96,6 +96,23 @@ namespace dae
 
 			return *this;
 		}
+		
+		const bool operator==(ColorRGB s)
+		{
+			return
+				r == s.r &&
+				g == s.g &&
+				b == s.b;
+
+		}
+			const bool operator!=(ColorRGB s)
+		{
+			return
+				r != s.r ||
+				g != s.g ||
+				b != s.b;
+
+		}
 
 		ColorRGB operator/(float s) const
 		{
