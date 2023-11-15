@@ -52,7 +52,8 @@ void Renderer::Render()
 	//Render_W1_2();
 	//Render_W1_3();
 	//Render_W1_4();
-	Render_W1_5();
+	//Render_W1_5();
+	Render_W2_1();
 
 	//@END
 	//Update SDL Surface
@@ -60,47 +61,6 @@ void Renderer::Render()
 	SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
 	SDL_UpdateWindowSurface(m_pWindow);
 	
-}
-
-void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
-{
-	//Todo > W1 Projection Stage
-	float ar{ float(m_Width) / m_Height };
-	float fov{ m_Camera.fov };
-	vertices_out.resize(vertices_in.size());
-
-	for (int i{}; i < vertices_out.size(); ++i)
-	{
-		float perspectiveX = vertices_in[i].position.x / vertices_in[i].position.z;
-		float perspectiveY = vertices_in[i].position.y / vertices_in[i].position.z;
-
-		vertices_out[i].position.x = perspectiveX / (ar * fov);
-		vertices_out[i].position.y = perspectiveY /  fov;
-		vertices_out[i].position.z = vertices_in[i].position.z;
-	}
-
-}
-
-void Renderer::VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const
-{
-	for (int i{}; i < vertices_in.size(); ++i)
-	{
-		Vector2 out{};
-		out.x = ((vertices_in[i].x + 1) / 2.0f) * static_cast<float> (m_Width);
-		out.y = ((1 - vertices_in[i].y) / 2.0f) * static_cast<float> (m_Height);
-		vertices_out.emplace_back(out);
-	}
-}
-
-void Renderer::VertectTransformToScreen(const std::vector<Vertex>& vertices_in, std::vector<Vector2>& vertices_out) const
-{
-	for (int i{}; i < vertices_in.size(); ++i)
-	{
-		Vector2 out{};
-		out.x = ((vertices_in[i].position.x + 1) / 2.0f) * static_cast<float> (m_Width);
-		out.y = ((1 - vertices_in[i].position.y) / 2.0f) * static_cast<float> (m_Height);
-		vertices_out.emplace_back(out);
-	}
 }
 
 bool Renderer::SaveBufferToImage() const
@@ -518,6 +478,172 @@ void Renderer::Render_W1_5()
 	ResetDepthBuffer();
 }
 
+void dae::Renderer::Render_W2_1()
+{
+	ColorRGB finalColor{  };
+
+	//World Space
+	std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+			{
+				Vertex{{-3,  3, -2}},
+				Vertex{{ 0,  3, -2}},
+				Vertex{{ 3,  3, -2}},
+				Vertex{{-3,  0, -2}},
+				Vertex{{ 0,  0, -2}},
+				Vertex{{ 3,  0, -2}},
+				Vertex{{-3, -3, -2}},
+				Vertex{{ 0, -3, -2}},
+				Vertex{{ 3, -3, -2}}
+			},
+			{
+				3, 0, 1,    1, 4, 3,    4, 1, 2,
+				2, 5, 4,    6, 3, 4,    4, 7, 6,
+				7, 4, 5,    5, 8, 7
+			},
+			PrimitiveTopology::TriangleList
+		},
+		//Mesh
+		//{
+		//	{
+		//		Vertex{{-3,  3, -2}},
+		//		Vertex{{ 0,  3, -2}},
+		//		Vertex{{ 3,  3, -2}},
+		//		Vertex{{-3,  0, -2}},
+		//		Vertex{{ 0,  0, -2}},
+		//		Vertex{{ 3,  0, -2}},
+		//		Vertex{{-3, -3, -2}},
+		//		Vertex{{ 0, -3, -2}},
+		//		Vertex{{ 3, -3, -2}}
+		//	},
+		//	{
+		//		3, 0, 4, 1, 5, 2,
+		//		2, 6,
+		//		6, 3, 7, 4, 8, 5
+		//	},
+		//	PrimitiveTopology::TriangleStrip
+		//}
+	};
+
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//Check every Mesh
+	/////////////////////////////////////////////////////////////////////////////////
+	for (Mesh& mesh : meshes_world)
+	{
+
+		/////////////////////////////////////////////////////////////////////////////
+		//Apply vieuw matrix to get Vieuw Space
+		std::vector<Vertex> vertices_Vieuw{};
+		vertices_Vieuw.reserve(3);
+
+		for (Vertex& vertc : mesh.vertices)
+			vertices_Vieuw.push_back(Vertex{ m_Camera.viewMatrix.TransformPoint(vertc.position) });
+		
+
+		/////////////////////////////////////////////////////////////////////////////
+		//Apply Projection Matrix to get NDC Space
+		std::vector<Vertex> vertices_NDC{};
+		vertices_NDC.reserve(3);
+		VertexTransformationFunction(vertices_Vieuw, vertices_NDC);
+
+		////////////////////////////////////////////////////////////////////////////
+		//NDC to rasterSpace
+		std::vector<Vector2> vector2_Screen{};
+		VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
+		int pxl{ -1 };
+		//////////////////////////////////////////////////////////////////////////
+		//check for every pxl if in Mesh
+		switch(mesh.primitiveTopology)
+		{
+			case PrimitiveTopology::TriangleList:
+
+			for (int px{}; px < m_Width; ++px)
+			{
+				for (int py{}; py < m_Height; ++py)
+				{
+					//pixel position and index
+					pxl++;
+					Vector2 pxlScr{ px + 0.5f, py + 0.5f };
+
+					////debug lines
+					//if (px > m_Width / 2 && py > m_Height / 2.5)
+					//{
+					//	std::cout << "het\n";
+					//}
+
+					//check for every triangle by its indices
+					for (size_t indc{ 0 }; indc < mesh.indices.size() ; indc += 3)
+					{
+						////check if in bounds -> check bounds for mesh -> need to fix
+						//if (!IsInBoundingBox(pxlScr, indc, vector2_Screen))
+						//	continue;
+
+						//get area between vector  vertix i ->pixel and vertix i -> vertix i+1
+						const float W2 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
+						const float W0 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]);
+						const float W1 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+
+						if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
+						{
+							const float W = Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+
+							//Get avg depth DepthCheck
+							const float depth0 = W0 / W * vertices_NDC[mesh.indices[indc + 0]].position.z;
+							const float depth1 = W1 / W * vertices_NDC[mesh.indices[indc + 1]].position.z;
+							const float depth2 = W2 / W * vertices_NDC[mesh.indices[indc + 2]].position.z;
+							const float avgDepth{ (depth0 + depth1 + depth2) / 3.f };
+
+							//if pxl is closer to camera, give color of triangleVertex
+							if (m_pDepthBufferPixels[pxl] > avgDepth)
+							{
+								finalColor = {
+									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.r + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.r + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.r,
+									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.g + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.g + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.g,
+									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.b + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.b + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.b
+
+								};
+								m_pDepthBufferPixels[pxl] = avgDepth;
+							}
+
+						}
+
+					}
+
+					//Update Color in Buffer
+					finalColor.MaxToOne();
+
+					m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+						static_cast<uint8_t>(finalColor.r * 255),
+						static_cast<uint8_t>(finalColor.g * 255),
+						static_cast<uint8_t>(finalColor.b * 255));
+
+
+					//reset for next pxl
+					finalColor = {};
+				}
+			}
+			ResetDepthBuffer();
+			break;
+
+			case PrimitiveTopology::TriangleStrip:
+
+
+			ResetDepthBuffer();
+				break;
+
+			default:
+				break;
+		}
+	}
+}
+
+
+
+
 void dae::Renderer::ResetDepthBuffer()
 {
 	for (int i{}; i < (m_Width * m_Height); ++i)
@@ -540,4 +666,46 @@ bool dae::Renderer::IsInBoundingBox(const Vector2& pxlScr, size_t indc, const st
 	else
 		return true;
 
+}
+
+
+void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const
+{
+	//Todo > W1 Projection Stage
+	float ar{ float(m_Width) / m_Height };
+	float fov{ m_Camera.fov };
+	vertices_out.resize(vertices_in.size());
+
+	for (int i{}; i < vertices_out.size(); ++i)
+	{
+		float perspectiveX = vertices_in[i].position.x / vertices_in[i].position.z;
+		float perspectiveY = vertices_in[i].position.y / vertices_in[i].position.z;
+
+		vertices_out[i].position.x = perspectiveX / (ar * fov);
+		vertices_out[i].position.y = perspectiveY /  fov;
+		vertices_out[i].position.z = vertices_in[i].position.z;
+	}
+
+}
+
+void Renderer::VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const
+{
+	for (int i{}; i < vertices_in.size(); ++i)
+	{
+		Vector2 out{};
+		out.x = ((vertices_in[i].x + 1) / 2.0f) * static_cast<float> (m_Width);
+		out.y = ((1 - vertices_in[i].y) / 2.0f) * static_cast<float> (m_Height);
+		vertices_out.emplace_back(out);
+	}
+}
+
+void Renderer::VertectTransformToScreen(const std::vector<Vertex>& vertices_in, std::vector<Vector2>& vertices_out) const
+{
+	for (int i{}; i < vertices_in.size(); ++i)
+	{
+		Vector2 out{};
+		out.x = ((vertices_in[i].position.x + 1) / 2.0f) * static_cast<float> (m_Width);
+		out.y = ((1 - vertices_in[i].position.y) / 2.0f) * static_cast<float> (m_Height);
+		vertices_out.emplace_back(out);
+	}
 }
