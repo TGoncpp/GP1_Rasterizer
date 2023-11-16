@@ -138,5 +138,6 @@ namespace dae
 		static ColorRGB White{ 1,1,1 };
 		static ColorRGB Black{ 0,0,0 };
 		static ColorRGB Gray{ 0.5f,0.5f,0.5f };
+		static ColorRGB Negative{ -0.5f,-0.5f,-0.5f };
 	}
 }

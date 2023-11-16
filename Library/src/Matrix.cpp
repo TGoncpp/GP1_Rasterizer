@@ -149,7 +149,7 @@ namespace dae {
 		Vector3 right { Vector3::Cross(forward, up).Normalized()};
 		Vector3 lookUp{ Vector3::Cross(right, forward).Normalized()};
 
-		Matrix R{-right, lookUp, -forward, Vector3::Zero };
+		Matrix R{-right, lookUp, forward, Vector3::Zero };
 		Matrix T{ CreateTranslation(origin) };
 
 		return { (T * R).Inverse()};

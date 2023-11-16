@@ -27,12 +27,17 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 	//Initialize Camera
 	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	m_pTexture  = Texture::LoadFromFile("Resources/uv_grid_2.png");
+	m_pTexture1 = Texture::LoadFromFile("Resources/uv_grid.png");
+
 
 }
 
 Renderer::~Renderer()
 {
 	delete[] m_pDepthBufferPixels;
+	delete m_pTexture;
+	delete m_pTexture1;
 }
 
 void Renderer::Update(Timer* pTimer)
@@ -439,7 +444,8 @@ void Renderer::Render_W1_5()
 
 				if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 				{
-					const float W = Vector2::Cross(vector2_Screen[1] - vector2_Screen[2], vector2_Screen[0] - vector2_Screen[2]);
+					//const float W = W0 + W1 + W2;
+					const float W = Vector2::Cross(vector2_Screen[indc + 1] - vector2_Screen[indc + 2], vector2_Screen[indc + 0] - vector2_Screen[indc + 2]);
 
 					//Get avg depth DepthCheck
 					const float depth0 = W0 / W * vertices_NDC[indc + 0].position.z;
@@ -482,22 +488,21 @@ void Renderer::Render_W1_5()
 void dae::Renderer::Render_W2_1()
 {
 
-
 	//World Space
 	std::vector<Mesh> meshes_world
 	{
 		Mesh
 		{
 			{
-				Vertex{{-3,  4, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0,  4, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3,  4, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{-3,  0, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3,  0, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{-3, -2, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}},
-				Vertex{{ 3, -2, -3}, {0.0f, 1.f, 1.f}}
+				Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
 			},
 			{
 				3, 0, 4, 1, 5, 2,
@@ -509,15 +514,15 @@ void dae::Renderer::Render_W2_1()
 		Mesh
 		{
 			{
-				Vertex{{-5,  3, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 0,  3, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 1,  3, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{-5,  0, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 0,  0, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 1,  0, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{-5, -6, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 0, -6, -2}, {1.0f, 1.f, 0.f}},
-				Vertex{{ 1, -6, -2}, {1.0f, 1.f, 0.f}}
+				Vertex{{-5,  3, 3}, {1.0f, 1.f, 0.f}, {0   , 0   }},
+				Vertex{{ 0,  3, 3}, {1.0f, 1.f, 0.f}, {0.5f, 0   }},
+				Vertex{{ 1,  3, 3}, {1.0f, 1.f, 0.f}, {1   , 0   }},
+				Vertex{{-5,  0, 3}, {1.0f, 1.f, 0.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, 3}, {1.0f, 1.f, 0.f}, {0.5f, 0.5f}},
+				Vertex{{ 1,  0, 3}, {1.0f, 1.f, 0.f}, {1   , 0.5f}},
+				Vertex{{-5, -6, 3}, {1.0f, 1.f, 0.f}, {0   , 1   }},
+				Vertex{{ 0, -6, 3}, {1.0f, 1.f, 0.f}, {0.5f, 1   }},
+				Vertex{{ 1, -6, 3}, {1.0f, 1.f, 0.f}, {1   , 1   }}
 			},
 			{
 				3, 0, 1,    1, 4, 3,    4, 1, 2,
@@ -528,7 +533,7 @@ void dae::Renderer::Render_W2_1()
 		}
 	};
 
-	ColorRGB finalColor{  };
+	ColorRGB finalColor{ colors::Negative };
 	
 	//////////////////////////////////////////////////////////////////////////////////
 	//Check every Mesh
@@ -608,12 +613,17 @@ void dae::Renderer::Render_W2_1()
 							//if pxl is closer to camera, give color of triangleVertex
 							if (m_pDepthBufferPixels[pxl] > avgDepth)
 							{
-								finalColor = {
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.r + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.r + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.r,
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.g + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.g + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.g,
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.b + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.b + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.b
-
+								
+								//value by uv
+								Vector2 uv{
+									  mesh.vertices[mesh.indices[indc + 0]].uv * W0 / W 
+									+ mesh.vertices[mesh.indices[indc + 1]].uv * W1 / W 
+									+ mesh.vertices[mesh.indices[indc + 2]].uv * W2 / W
 								};
+								
+								finalColor = m_pTexture1->Sample(uv);
+								//finalColor = colors::Green;
+			
 								m_pDepthBufferPixels[pxl] = avgDepth;
 							}
 							
@@ -649,7 +659,8 @@ void dae::Renderer::Render_W2_1()
 						if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 						{
 							const float sign{ (indc % 2 == 0) ? 1.f : -1.f };
-							const float W = sign * Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+							//const float W = sign * Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+							const float W = (W0 + W1 + W2);
 
 							//Get avg depth DepthCheck
 							const float depth0 = W0 / W * vertices_NDC[mesh.indices[indc + 0]].position.z;
@@ -660,12 +671,14 @@ void dae::Renderer::Render_W2_1()
 							//if pxl is closer to camera, give color of triangleVertex
 							if (m_pDepthBufferPixels[pxl] > avgDepth)
 							{
-								finalColor = {
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.r + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.r + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.r,
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.g + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.g + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.g,
-									W0 / W * mesh.vertices[mesh.indices[indc + 0]].color.b + W1 / W * mesh.vertices[mesh.indices[indc + 1]].color.b + W2 / W * mesh.vertices[mesh.indices[indc + 2]].color.b
-
+								//value by uv
+								Vector2 uv{
+									  mesh.vertices[mesh.indices[indc + 0]].uv * W0 / W
+									+ mesh.vertices[mesh.indices[indc + 1]].uv * W1 / W
+									+ mesh.vertices[mesh.indices[indc + 2]].uv * W2 / W
 								};
+
+								finalColor = m_pTexture->Sample(uv);
 								m_pDepthBufferPixels[pxl] = avgDepth;
 							}
 
@@ -684,7 +697,7 @@ void dae::Renderer::Render_W2_1()
 				finalColor.MaxToOne();
 
 				//if already colored and no closer hit from current pixel -> keep previous pixel 
-				if (finalColor == colors::Black /*&& m_pDepthBufferPixels[pxl] < std::numeric_limits<float>::max() - 1.0f*/)
+				if (finalColor == colors::Negative /*&& m_pDepthBufferPixels[pxl] < std::numeric_limits<float>::max() - 1.0f*/)
 					isColored = true;
 				else
 					isColored = false;
@@ -699,7 +712,7 @@ void dae::Renderer::Render_W2_1()
 
 
 				//reset for next pxl
-				finalColor = {};
+				finalColor = colors::Negative;
 		
 			
 			}//end for py

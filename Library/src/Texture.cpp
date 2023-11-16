@@ -25,14 +25,34 @@ namespace dae
 		//Load SDL_Surface using IMG_LOAD
 		//Create & Return a new Texture Object (using SDL_Surface)
 
-		return nullptr;
+		SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+		if (loadedSurface == NULL)
+		{
+			printf("Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError());
+		}
+
+		return new Texture(loadedSurface);
+
 	}
 
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
 		//TODO
 		//Sample the correct texel for the given uv
+		const float uNormal{ std::ranges::clamp(uv.x, 0.f, 1.f) };
+		const float vNormal{ std::ranges::clamp(uv.y, 0.f, 1.f) };
 
-		return {};
+		const Uint32 u{ Uint32 (uNormal * m_pSurface->w) };
+		const Uint32 v{ Uint32 (vNormal * m_pSurface->h) };
+
+		//const Uint32 totPxl{ Uint32(m_pSurface->w * m_pSurface->h) };
+
+		Uint32 pxl{ ( u  + (v * m_pSurface->w )) };
+
+		Uint8 r{}, b{}, g{};
+
+		SDL_GetRGB(m_pSurfacePixels[pxl], m_pSurface->format, &r, &b, &g);
+
+		return { ColorRGB{(float)r, (float)g, (float)b} };
 	}
 }

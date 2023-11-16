@@ -32,12 +32,12 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
+	private:
 		void VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const;
 		void VertectTransformToScreen(const std::vector<Vertex>& vertices_in, std::vector<Vector2>& vertices_out) const;
 
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
 
-	private:
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pFrontBuffer{ nullptr };
@@ -46,6 +46,8 @@ namespace dae
 		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
+		Texture* m_pTexture{};
+		Texture* m_pTexture1{};
 
 
 		int m_Width{};
