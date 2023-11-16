@@ -602,7 +602,8 @@ void dae::Renderer::Render_W2_1()
 
 						if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 						{
-							const float W = Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+							//const float W = Vector2::Cross(vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+							const float W = W0 + W1 + W2;
 
 							//Get avg depth DepthCheck
 							const float depth0 = W0 / W * vertices_NDC[mesh.indices[indc + 0]].position.z;
@@ -610,20 +611,24 @@ void dae::Renderer::Render_W2_1()
 							const float depth2 = W2 / W * vertices_NDC[mesh.indices[indc + 2]].position.z;
 							const float avgDepth{ (depth0 + depth1 + depth2) / 3.f };
 
-							//if pxl is closer to camera, give color of triangleVertex
+							////if pxl is closer to camera, give color of triangleVertex
 							if (m_pDepthBufferPixels[pxl] > avgDepth)
 							{
+								const float zInterpolated{ 1.0f / (
+									  ( (W0 / W) / vertices_NDC[mesh.indices[indc + 0]].position.z)
+									+ ( (W1 / W) / vertices_NDC[mesh.indices[indc + 1]].position.z)
+									+ ( (W2 / W) / vertices_NDC[mesh.indices[indc + 2]].position.z)
+										) };
 								
 								//value by uv
-								Vector2 uv{
-									  mesh.vertices[mesh.indices[indc + 0]].uv * W0 / W 
-									+ mesh.vertices[mesh.indices[indc + 1]].uv * W1 / W 
-									+ mesh.vertices[mesh.indices[indc + 2]].uv * W2 / W
+								Vector2 uv{(
+									  mesh.vertices[mesh.indices[indc + 0]].uv * (W0 / W) /vertices_NDC[mesh.indices[indc + 0]].position.z 
+									+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1 / W) /vertices_NDC[mesh.indices[indc + 1]].position.z 
+									+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2 / W) /vertices_NDC[mesh.indices[indc + 2]].position.z 
+									  ) * zInterpolated
 								};
 								
-								finalColor = m_pTexture1->Sample(uv);
-								//finalColor = colors::Green;
-			
+								finalColor = m_pTexture1->Sample(uv);			
 								m_pDepthBufferPixels[pxl] = avgDepth;
 							}
 							
@@ -668,14 +673,21 @@ void dae::Renderer::Render_W2_1()
 							const float depth2 = W2 / W * vertices_NDC[mesh.indices[indc + 2]].position.z;
 							const float avgDepth{ (depth0 + depth1 + depth2) / 3.f };
 
-							//if pxl is closer to camera, give color of triangleVertex
+							////if pxl is closer to camera, give color of triangleVertex
 							if (m_pDepthBufferPixels[pxl] > avgDepth)
 							{
+								const float zInterpolated{ 1.0f / (
+									  ( (W0 / W) / vertices_NDC[mesh.indices[indc + 0]].position.z)
+									+ ( (W1 / W) / vertices_NDC[mesh.indices[indc + 1]].position.z)
+									+ ( (W2 / W) / vertices_NDC[mesh.indices[indc + 2]].position.z)
+										) };
+
 								//value by uv
-								Vector2 uv{
-									  mesh.vertices[mesh.indices[indc + 0]].uv * W0 / W
-									+ mesh.vertices[mesh.indices[indc + 1]].uv * W1 / W
-									+ mesh.vertices[mesh.indices[indc + 2]].uv * W2 / W
+								Vector2 uv{ (
+									  mesh.vertices[mesh.indices[indc + 0]].uv * (W0 / W) / vertices_NDC[mesh.indices[indc + 0]].position.z
+									+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1 / W) / vertices_NDC[mesh.indices[indc + 1]].position.z
+									+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2 / W) / vertices_NDC[mesh.indices[indc + 2]].position.z
+									  ) * zInterpolated
 								};
 
 								finalColor = m_pTexture->Sample(uv);
