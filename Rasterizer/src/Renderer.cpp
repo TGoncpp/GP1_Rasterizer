@@ -723,16 +723,10 @@ void dae::Renderer::Render_W2_1()
 						static_cast<uint8_t>(finalColor.b * 255));
 				}
 
-
-				//reset for next pxl
 				finalColor = colors::Negative;
-		
 			
 			}//end for py
-		
 		}//end for px
-
-	
 	}//end for each Mesh
 	ResetDepthBuffer();
 }
@@ -743,6 +737,26 @@ void dae::Renderer::Render_W2_2()
 	//World Space
 	std::vector<Mesh> meshes_world
 	{
+		Mesh
+		{
+			{
+				Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+			PrimitiveTopology::TriangleStrip
+		},
 		//Mesh
 		//{
 		//	{
@@ -757,32 +771,12 @@ void dae::Renderer::Render_W2_2()
 		//		Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
 		//	},
 		//	{
-		//		3, 0, 4, 1, 5, 2,
-		//		2, 6,
-		//		6, 3, 7, 4, 8, 5
+		//		3, 0, 1,    1, 4, 3,    4, 1, 2,
+		//		2, 5, 4,    6, 3, 4,    4, 7, 6,
+		//		7, 4, 5,    5, 8, 7
 		//	},
-		//	PrimitiveTopology::TriangleStrip
-		//},
-		Mesh
-		{
-			{
-				Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-			},
-			{
-				3, 0, 1,    1, 4, 3,    4, 1, 2,
-				2, 5, 4,    6, 3, 4,    4, 7, 6,
-				7, 4, 5,    5, 8, 7
-			},
-			PrimitiveTopology::TriangleList
-		}
+		//	PrimitiveTopology::TriangleList
+		//}
 	};
 
 	ColorRGB finalColor{ colors::Negative };
@@ -817,17 +811,39 @@ void dae::Renderer::Render_W2_2()
 
 		//////////////////////////////////////////////////////////////////////////
 		//loop through every triangle of current mesh
-		for (size_t indc{ 0 }; indc < mesh.indices.size(); indc += 3)
+		int increment{};
+		int sizeReducer{};
+		bool invertEven{};
+		switch(mesh.primitiveTopology)
 		{
+		case PrimitiveTopology::TriangleList:
+			increment   = 3;
+			sizeReducer = 0;
+			invertEven  = false;
+			break;
+		case PrimitiveTopology::TriangleStrip:
+			increment   = 1;
+			sizeReducer = 2;
+			invertEven  = true;
+			break;
+		default:
+			std::cout << "invallid triangle type\n";
+			break;
+		}
+		
+
+		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
+		{
+			/////////////////////////////////////////////////////////////////
 			//check bounds off current mesh
 			int left  {int ( std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) )};
 			int top   {int ( std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
 			int right {int ( std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)) };
 			int bottom{int ( std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
 
-			left = Clamp(left, 0, m_Width);
-			top = Clamp(top, 0, m_Height);
-			right = Clamp(right, 0, m_Width);
+			left   = Clamp(left, 0, m_Width);
+			top    = Clamp(top, 0, m_Height);
+			right  = Clamp(right, 0, m_Width);
 			bottom = Clamp(bottom, 0, m_Height);
 
 
@@ -840,9 +856,14 @@ void dae::Renderer::Render_W2_2()
 					int pxl{ px + py * m_Width };
 					Vector2 pxlScr{ px + 0.5f, py + 0.5f };
 
-					const float W2 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
-					const float W0 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]);
-					const float W1 = Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+					//invert when using triangleStrips
+					int inverter{ 1 };
+					if (invertEven && indc % 2 != 0)
+						inverter = -1;
+
+					const float W2 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
+					const float W0 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]);
+					const float W1 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
 
 					if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 					{
