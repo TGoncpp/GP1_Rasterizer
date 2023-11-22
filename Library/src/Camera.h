@@ -47,7 +47,14 @@ namespace dae
 			//TODO W1
 			//ONB => invViewMatrix
 			//Inverse(ONB) => ViewMatrix			
+
+			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
+			up = Vector3::Cross(forward, right).Normalized();
+			invViewMatrix = Matrix{ {right, 0}, {up, 0},
+				{forward, 0}, {origin, 1} };
+
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
+
 			
 			
 
@@ -118,27 +125,29 @@ namespace dae
 				
 				origin -= forward * swipeSpeed * deltaTime * float(mouseY);
 				totalYaw += float(mouseX) * deltaTime * rotationSpeed;
-				forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
+				//forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
+
 			}
 			
 			//move up and down
 			if ((SDL_BUTTON(1) | SDL_BUTTON(3)) == mouseState)
 			{
 				origin -= up * swipeSpeed * deltaTime * float(mouseY);
-				//std::cout << "message\n";
 			}
 			
 			//Rotation
 			if (SDL_BUTTON(3) == mouseState)
 			{
 				totalPitch += float(mouseY) * deltaTime * rotationSpeed;
-				totalYaw += float(mouseX) * deltaTime * rotationSpeed;
-				forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
+				totalYaw   += float(mouseX) * deltaTime * rotationSpeed;
+				//forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
 			}
 
 
 #pragma endregion
-
+			const Matrix finalRotation{ Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw) };
+			forward = finalRotation.TransformVector(Vector3::UnitZ);
+			forward.Normalize();
 
 			//Update Matrices
 			CalculateViewMatrix();

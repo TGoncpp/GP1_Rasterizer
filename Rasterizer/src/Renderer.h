@@ -62,6 +62,7 @@ namespace dae
 		void Render_W1_5();
 
 		void Render_W2_1();
+		void Render_W2_2();
 
 		void ResetDepthBuffer();
 		void ResetColorBuffer();

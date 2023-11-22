@@ -146,13 +146,23 @@ namespace dae {
 	{
 		//TODO W1
 
-		Vector3 right { Vector3::Cross(forward, up).Normalized()};
-		Vector3 lookUp{ Vector3::Cross(right, forward).Normalized()};
+		//Vector3 right { Vector3::Cross(forward, Vector3::UnitY).Normalized()};
+		//Vector3 lookUp{ Vector3::Cross(right, forward).Normalized()};
+		//
+		//Matrix R{-right, lookUp, forward, Vector3::Zero };
+		//Matrix T{ CreateTranslation(origin) };
+		//
+		//return { (T * R).Inverse()};
 
-		Matrix R{-right, lookUp, forward, Vector3::Zero };
-		Matrix T{ CreateTranslation(origin) };
+		const Vector3 zAxis{ forward };
+		const Vector3 xAxis{ Vector3::Cross(up, zAxis).Normalized() };
+		const Vector3 yAxis{ Vector3::Cross(zAxis, xAxis) };
 
-		return { (T * R).Inverse()};
+		return Matrix{ {xAxis.x, yAxis.x, zAxis.x, 0},
+			{xAxis.y, yAxis.y, zAxis.y, 0} ,
+			{xAxis.z, yAxis.z, zAxis.z, 0 },
+			{ -Vector3::Dot(xAxis, origin), -Vector3::Dot(yAxis, origin), -Vector3::Dot(zAxis, origin), 1} };
+
 	}
 
 	Matrix Matrix::CreatePerspectiveFovLH(float fov, float aspect, float zn, float zf)
