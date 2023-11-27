@@ -13,6 +13,7 @@ namespace dae
 	class Texture;
 	struct Mesh;
 	struct Vertex;
+	struct Vertex_Out;
 	class Timer;
 	class Scene;
 
@@ -35,8 +36,10 @@ namespace dae
 	private:
 		void VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const;
 		void VertectTransformToScreen(const std::vector<Vertex>& vertices_in, std::vector<Vector2>& vertices_out) const;
+		void VertectTransformToScreen(const std::vector<Vector4>& vertices_in, std::vector<Vector2>& vertices_out) const;
 
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
+		void ProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC) ;
 
 		SDL_Window* m_pWindow{};
 
@@ -63,6 +66,8 @@ namespace dae
 
 		void Render_W2_1();
 		void Render_W2_2();
+
+		void Render_W3_1();
 
 		void ResetDepthBuffer();
 		void ResetColorBuffer();

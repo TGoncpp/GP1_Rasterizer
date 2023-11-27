@@ -29,6 +29,8 @@ namespace dae
 		Vector4 operator*(float scale) const;
 		Vector4 operator+(const Vector4& v) const;
 		Vector4 operator-(const Vector4& v) const;
+		//divides all axis except w
+		Vector4 operator/(float) const;
 		Vector4& operator+=(const Vector4& v);
 		float& operator[](int index);
 		float operator[](int index) const;

@@ -23,6 +23,9 @@ namespace dae
 		Vector3 origin{};
 		float fovAngle{90.f};
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
+		float ar{ 1};
+		float nearPlane{ 1 };
+		float farPlane{ 100 };
 
 		Vector3 forward{Vector3::UnitZ};
 		Vector3 up{Vector3::UnitY};
@@ -33,6 +36,9 @@ namespace dae
 
 		Matrix invViewMatrix{};
 		Matrix viewMatrix{};
+		Matrix projectionMatrix{};
+
+		void SetAspectRatio(float value) { ar = value; }
 
 		void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})
 		{
@@ -66,6 +72,7 @@ namespace dae
 		{
 			//TODO W3
 
+			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, ar, nearPlane, farPlane);
 			//ProjectionMatrix => Matrix::CreatePerspectiveFovLH(...) [not implemented yet]
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixperspectivefovlh
 		}

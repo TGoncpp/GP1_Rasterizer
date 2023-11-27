@@ -27,6 +27,7 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 	//Initialize Camera
 	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
 	m_pTexture  = Texture::LoadFromFile("Resources/uv_grid_2.png");
 	m_pTexture1 = Texture::LoadFromFile("Resources/uv_grid.png");
 
@@ -60,7 +61,8 @@ void Renderer::Render()
 	//Render_W1_4();
 	//Render_W1_5();
 	//Render_W2_1();
-	Render_W2_2();
+	//Render_W2_2();
+	Render_W3_1();
 
 	//@END
 	//Update SDL Surface
@@ -757,26 +759,26 @@ void dae::Renderer::Render_W2_2()
 			},
 			PrimitiveTopology::TriangleStrip
 		},
-		//Mesh
-		//{
-		//	{
-		//		Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-		//		Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-		//		Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-		//		Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-		//		Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-		//		Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-		//		Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-		//		Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-		//		Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-		//	},
-		//	{
-		//		3, 0, 1,    1, 4, 3,    4, 1, 2,
-		//		2, 5, 4,    6, 3, 4,    4, 7, 6,
-		//		7, 4, 5,    5, 8, 7
-		//	},
-		//	PrimitiveTopology::TriangleList
-		//}
+		Mesh
+		{
+			{
+				Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 1,    1, 4, 3,    4, 1, 2,
+				2, 5, 4,    6, 3, 4,    4, 7, 6,
+				7, 4, 5,    5, 8, 7
+			},
+			PrimitiveTopology::TriangleList
+		}
 	};
 
 	ColorRGB finalColor{ colors::Negative };
@@ -791,21 +793,22 @@ void dae::Renderer::Render_W2_2()
 		/////////////////////////////////////////////////////////////////////////////
 		//Apply vieuw matrix to get Vieuw Space
 		std::vector<Vertex> vertices_Vieuw{};
-		vertices_Vieuw.reserve(3);
+		vertices_Vieuw.reserve(mesh.vertices.size());
 
 		for (Vertex& vertc : mesh.vertices)
 			vertices_Vieuw.push_back(Vertex{ m_Camera.viewMatrix.TransformPoint(vertc.position) });
-		
+
 
 		/////////////////////////////////////////////////////////////////////////////
 		//Apply Projection Matrix to get NDC Space
 		std::vector<Vertex> vertices_NDC{};
-		vertices_NDC.reserve(3);
+		vertices_NDC.reserve(mesh.vertices.size());
 		VertexTransformationFunction(vertices_Vieuw, vertices_NDC);
 
 		////////////////////////////////////////////////////////////////////////////
 		//NDC to rasterSpace
 		std::vector<Vector2> vector2_Screen{};
+		vector2_Screen.reserve(mesh.vertices.size());
 		VertectTransformToScreen(vertices_NDC, vector2_Screen);
 
 
@@ -834,7 +837,6 @@ void dae::Renderer::Render_W2_2()
 
 		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
 		{
-			/////////////////////////////////////////////////////////////////
 			//check bounds off current mesh
 			int left  {int ( std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) )};
 			int top   {int ( std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
@@ -847,7 +849,7 @@ void dae::Renderer::Render_W2_2()
 			bottom = Clamp(bottom, 0, m_Height);
 
 
-
+			//Check for every pxl if in current triangle
 			for (int px{left}; px < right; ++px)
 			{
 				for (int py{top}; py < bottom; ++py)
@@ -856,44 +858,33 @@ void dae::Renderer::Render_W2_2()
 					int pxl{ px + py * m_Width };
 					Vector2 pxlScr{ px + 0.5f, py + 0.5f };
 
-					//invert when using triangleStrips
-					int inverter{ 1 };
-					if (invertEven && indc % 2 != 0)
-						inverter = -1;
+					//invert Weights when using triangleStrips
+					int inverter{ (invertEven && indc % 2 != 0)? -1 : 1};
 
-					const float W2 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]);
-					const float W0 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]);
-					const float W1 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]);
+					const float W =  inverter*Vector2::Cross(vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]]);
+					const float W2 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]])/W;
+					const float W0 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]])/W;
+					const float W1 = inverter*Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]])/W;
 
 					if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 					{
-						const float W = W0 + W1 + W2;
+						const float zInterpolated{ 1.0f / (
+							  ( (W0 ) / vertices_NDC[mesh.indices[indc + 0]].position.z)
+							+ ( (W1 ) / vertices_NDC[mesh.indices[indc + 1]].position.z)
+							+ ( (W2 ) / vertices_NDC[mesh.indices[indc + 2]].position.z)
+								) };
 
-						//Get avg depth DepthCheck
-						const float depth0 = W0 / W * vertices_NDC[mesh.indices[indc + 0]].position.z;
-						const float depth1 = W1 / W * vertices_NDC[mesh.indices[indc + 1]].position.z;
-						const float depth2 = W2 / W * vertices_NDC[mesh.indices[indc + 2]].position.z;
-						const float avgDepth{ (depth0 + depth1 + depth2) / 3.f };
-
-						////if pxl is closer to camera, give color of triangleVertex
-						if (m_pDepthBufferPixels[pxl] > avgDepth)
+						if (m_pDepthBufferPixels[pxl] > zInterpolated)
 						{
-							const float zInterpolated{ 1.0f / (
-								  ( (W0 / W) / vertices_NDC[mesh.indices[indc + 0]].position.z)
-								+ ( (W1 / W) / vertices_NDC[mesh.indices[indc + 1]].position.z)
-								+ ( (W2 / W) / vertices_NDC[mesh.indices[indc + 2]].position.z)
-									) };
-							
-							//value by uv
 							Vector2 uv{(
-								  mesh.vertices[mesh.indices[indc + 0]].uv * (W0 / W) /vertices_NDC[mesh.indices[indc + 0]].position.z 
-								+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1 / W) /vertices_NDC[mesh.indices[indc + 1]].position.z 
-								+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2 / W) /vertices_NDC[mesh.indices[indc + 2]].position.z 
+								  mesh.vertices[mesh.indices[indc + 0]].uv * (W0 ) /vertices_NDC[mesh.indices[indc + 0]].position.z 
+								+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1 ) /vertices_NDC[mesh.indices[indc + 1]].position.z 
+								+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2 ) /vertices_NDC[mesh.indices[indc + 2]].position.z 
 								  ) * zInterpolated
 							};
 							
 							finalColor = m_pTexture->Sample(uv);			
-							m_pDepthBufferPixels[pxl] = avgDepth;
+							m_pDepthBufferPixels[pxl] = zInterpolated;
 						}						
 					}//end if pxl in triangle
 
@@ -928,6 +919,185 @@ void dae::Renderer::Render_W2_2()
 	}//end for each Mesh
 	ResetDepthBuffer();
 }
+
+void dae::Renderer::Render_W3_1()
+{
+
+	//World Space
+	std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+			{
+				Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+			PrimitiveTopology::TriangleStrip,
+
+		},
+		Mesh
+		{
+			{
+				Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 1,    1, 4, 3,    4, 1, 2,
+				2, 5, 4,    6, 3, 4,    4, 7, 6,
+				7, 4, 5,    5, 8, 7
+			},
+			PrimitiveTopology::TriangleList
+		}
+	};
+
+	ColorRGB finalColor{ colors::Negative };
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//Check every Mesh
+	/////////////////////////////////////////////////////////////////////////////////
+	for (Mesh& mesh : meshes_world)
+	{
+		bool isColored{ false };//-> get value from depthBuffer if pixel is already colored  
+		
+		////////////////////////////////////////////////////////////////////////////
+		//World to NDCSpace
+		std::vector<Vector4> vertices_NDC{};
+		vertices_NDC.reserve(mesh.vertices.size());
+		ProjectionToNDC(mesh.vertices, vertices_NDC);
+
+		////////////////////////////////////////////////////////////////////////////
+		//NDC to RasterSpace
+		std::vector<Vector2> vector2_Screen{};
+		vector2_Screen.reserve(mesh.vertices.size());
+		VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
+		//check triangleType and adjust loop variables 
+		int increment{};
+		int sizeReducer{};
+		bool invertEven{};
+		switch (mesh.primitiveTopology)
+		{
+		case PrimitiveTopology::TriangleList:
+			increment = 3;
+			sizeReducer = 0;
+			invertEven = false;
+			break;
+		case PrimitiveTopology::TriangleStrip:
+			increment = 1;
+			sizeReducer = 2;
+			invertEven = true;
+			break;
+		default:
+			std::cout << "invallid triangle type\n";
+			break;
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		//loop through every triangle of current mesh
+		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
+		{
+			//check bounds off current mesh
+			int left{   int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)) };
+			int top{    int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
+			int right{  int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)) };
+			int bottom{ int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
+
+			left   = Clamp(left, 0, m_Width);
+			top    = Clamp(top, 0, m_Height);
+			right  = Clamp(right, 0, m_Width);
+			bottom = Clamp(bottom, 0, m_Height);
+
+
+			//Check for every pxl if in current triangle
+			for (int px{ left }; px < right; ++px)
+			{
+				for (int py{ top }; py < bottom; ++py)
+				{
+					//pixel position and index
+					int pxl{ px + py * m_Width };
+					Vector2 pxlScr{ px + 0.5f, py + 0.5f };
+
+					//invert Weights when using triangleStrips
+					int inverter{ (invertEven && indc % 2 != 0) ? -1 : 1 };
+
+					const float W = inverter * Vector2::Cross(vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]]);
+					const float W2 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]) / W;
+					const float W0 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]) / W;
+					const float W1 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]) / W;
+
+					if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
+					{
+						const float zInterpolated{ 1.0f / (
+							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].w)
+							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].w)
+							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].w)
+								) };
+
+						if (m_pDepthBufferPixels[pxl] > zInterpolated)
+						{
+							Vector2 uv{ (
+								  mesh.vertices[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].w
+								+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].w
+								+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].w
+								  ) * zInterpolated
+							};
+
+							finalColor = m_pTexture->Sample(uv);
+							m_pDepthBufferPixels[pxl] = zInterpolated;
+						}
+					}//end if pxl in triangle
+
+					/////////////////////////////////////////////////////////////////////////////
+					//Update Color in Buffer for current mesh
+					/////////////////////////////////////////////////////////////////////////////
+					finalColor.MaxToOne();
+
+					if (finalColor == colors::Negative)
+						isColored = true;
+					else
+						isColored = false;
+
+					if (!isColored)
+					{
+						m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+							static_cast<uint8_t>(finalColor.r * 255),
+							static_cast<uint8_t>(finalColor.g * 255),
+							static_cast<uint8_t>(finalColor.b * 255));
+					}
+
+					//reset for next pxl
+					finalColor = colors::Negative;
+
+				}//end for py
+
+			}//end for px
+
+		}//end for each triangle
+
+
+	}//end for each Mesh
+	ResetDepthBuffer();
+}
+
 
 
 
@@ -1002,6 +1172,21 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 
 }
 
+void dae::Renderer::ProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC)
+{
+	const Matrix worldToNDC{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+	for (const Vertex& vert : world)
+	{
+		Vector4 intermediate = worldToNDC.TransformPoint(vert.position.ToPoint4());
+		intermediate.x /= intermediate.w;
+		intermediate.y /= intermediate.w;
+		intermediate.z /= intermediate.w;
+		intermediate.w  = intermediate.w;
+
+		NDC.push_back(Vector4{ intermediate });
+	}
+}
+
 void Renderer::VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const
 {
 	for (int i{}; i < vertices_in.size(); ++i)
@@ -1020,6 +1205,17 @@ void Renderer::VertectTransformToScreen(const std::vector<Vertex>& vertices_in, 
 		Vector2 out{};
 		out.x = ((vertices_in[i].position.x + 1) / 2.0f) * static_cast<float> (m_Width);
 		out.y = ((1 - vertices_in[i].position.y) / 2.0f) * static_cast<float> (m_Height);
+		vertices_out.emplace_back(out);
+	}
+}
+
+void Renderer::VertectTransformToScreen(const std::vector<Vector4>& vertices_in, std::vector<Vector2>& vertices_out) const
+{
+	for (int i{}; i < vertices_in.size(); ++i)
+	{
+		Vector2 out{};
+		out.x = ((vertices_in[i].x + 1) / 2.0f) * static_cast<float> (m_Width);
+		out.y = ((1 - vertices_in[i].y) / 2.0f) * static_cast<float> (m_Height);
 		vertices_out.emplace_back(out);
 	}
 }
