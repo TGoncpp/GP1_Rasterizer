@@ -950,15 +950,15 @@ void dae::Renderer::Render_W3_1()
 		Mesh
 		{
 			{
-				Vertex{{-3,  3, -2}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 3,  3, -2}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-3,  0, -2}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, -2}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 3,  0, -2}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-3, -3, -2}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -3, -2}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 3, -3, -2}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+				Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
 			},
 			{
 				3, 0, 1,    1, 4, 3,    4, 1, 2,
@@ -978,18 +978,19 @@ void dae::Renderer::Render_W3_1()
 	{
 		bool isColored{ false };//-> get value from depthBuffer if pixel is already colored  
 		
-		////////////////////////////////////////////////////////////////////////////
 		//World to NDCSpace
 		std::vector<Vector4> vertices_NDC{};
 		vertices_NDC.reserve(mesh.vertices.size());
 		ProjectionToNDC(mesh.vertices, vertices_NDC);
 
-		////////////////////////////////////////////////////////////////////////////
 		//NDC to RasterSpace
 		std::vector<Vector2> vector2_Screen{};
 		vector2_Screen.reserve(mesh.vertices.size());
 		VertectTransformToScreen(vertices_NDC, vector2_Screen);
 
+		//////////////////////////////////////////////////////////////////////////
+		//loop through every triangle of current mesh
+		
 		//check triangleType and adjust loop variables 
 		int increment{};
 		int sizeReducer{};
@@ -1011,21 +1012,13 @@ void dae::Renderer::Render_W3_1()
 			break;
 		}
 
-		//////////////////////////////////////////////////////////////////////////
-		//loop through every triangle of current mesh
 		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
 		{
 			//check bounds off current mesh
-			int left{   int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)) };
-			int top{    int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
-			int right{  int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)) };
-			int bottom{ int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)) };
-
-			left   = Clamp(left, 0, m_Width);
-			top    = Clamp(top, 0, m_Height);
-			right  = Clamp(right, 0, m_Width);
-			bottom = Clamp(bottom, 0, m_Height);
-
+			const int left  { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)), 0, m_Width) };
+			const int top   { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)), 0, m_Height) };
+			const int right { Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)), 0, m_Width) };
+			const int bottom{ Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)), 0, m_Height) };
 
 			//Check for every pxl if in current triangle
 			for (int px{ left }; px < right; ++px)
@@ -1038,22 +1031,34 @@ void dae::Renderer::Render_W3_1()
 
 					//invert Weights when using triangleStrips
 					int inverter{ (invertEven && indc % 2 != 0) ? -1 : 1 };
-
-					const float W = inverter * Vector2::Cross(vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]]);
+					const float W  = inverter * Vector2::Cross(vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]]);
 					const float W2 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]) / W;
 					const float W0 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]) / W;
 					const float W1 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]) / W;
 
+					//if pxl in current triangle, check depth
 					if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
 					{
-						const float zInterpolated{ 1.0f / (
-							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].w)
-							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].w)
-							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].w)
-								) };
+						const float zBufferValue
+						{ -1.0f / (
+							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].z)
+							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].z)
+							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].z)
+						) };
 
-						if (m_pDepthBufferPixels[pxl] > zInterpolated)
+						//if pixel not in frustum, check next pxl
+						if (zBufferValue < 0.0f || zBufferValue > 1.0f)
+							continue;
+
+						if (m_pDepthBufferPixels[pxl] > zBufferValue)
 						{
+							const float zInterpolated
+							{ 1.0f / (
+								  ((W0) / vertices_NDC[mesh.indices[indc + 0]].w)
+								+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].w)
+								+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].w)
+							) };
+
 							Vector2 uv{ (
 								  mesh.vertices[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].w
 								+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].w
@@ -1062,7 +1067,7 @@ void dae::Renderer::Render_W3_1()
 							};
 
 							finalColor = m_pTexture->Sample(uv);
-							m_pDepthBufferPixels[pxl] = zInterpolated;
+							m_pDepthBufferPixels[pxl] = zBufferValue;
 						}
 					}//end if pxl in triangle
 
@@ -1092,7 +1097,6 @@ void dae::Renderer::Render_W3_1()
 			}//end for px
 
 		}//end for each triangle
-
 
 	}//end for each Mesh
 	ResetDepthBuffer();
