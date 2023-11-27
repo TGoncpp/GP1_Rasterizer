@@ -32,6 +32,7 @@ namespace dae
 		void Render();
 
 		bool SaveBufferToImage() const;
+		void SwitchMode();
 
 	private:
 		void VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const;
@@ -51,11 +52,18 @@ namespace dae
 		Camera m_Camera{};
 		Texture* m_pTexture{};
 		Texture* m_pTexture1{};
-
+		Texture* m_pTextureTuktuk{};
 
 		int m_Width{};
 		int m_Height{};
 
+		enum class CameraMode
+		{
+			Depth,
+			Color,
+			UV
+		};
+		CameraMode m_CameraMode{ CameraMode::UV };
 
 		void IntroRender()const;
 		void Render_W1_1()const;

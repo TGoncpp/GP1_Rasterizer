@@ -131,7 +131,7 @@ namespace dae
 			{
 				
 				origin -= forward * swipeSpeed * deltaTime * float(mouseY);
-				totalYaw += float(mouseX) * deltaTime * rotationSpeed;
+				totalYaw -= float(mouseX) * deltaTime * rotationSpeed;
 				//forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
 
 			}
@@ -146,7 +146,7 @@ namespace dae
 			if (SDL_BUTTON(3) == mouseState)
 			{
 				totalPitch += float(mouseY) * deltaTime * rotationSpeed;
-				totalYaw   += float(mouseX) * deltaTime * rotationSpeed;
+				totalYaw   -= float(mouseX) * deltaTime * rotationSpeed;
 				//forward = Matrix::CreateRotationY(totalYaw).TransformVector(Vector3::UnitZ);
 			}
 

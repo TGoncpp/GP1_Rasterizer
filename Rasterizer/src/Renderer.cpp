@@ -26,10 +26,12 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	ResetDepthBuffer();
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	//m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	m_Camera.Initialize(60.f, { .0f, 5.0f,-30.f });
 	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
 	m_pTexture  = Texture::LoadFromFile("Resources/uv_grid_2.png");
 	m_pTexture1 = Texture::LoadFromFile("Resources/uv_grid.png");
+	m_pTextureTuktuk = Texture::LoadFromFile("Resources/tuktuk.png");
 
 
 }
@@ -39,6 +41,7 @@ Renderer::~Renderer()
 	delete[] m_pDepthBufferPixels;
 	delete m_pTexture;
 	delete m_pTexture1;
+	delete m_pTextureTuktuk;
 }
 
 void Renderer::Update(Timer* pTimer)
@@ -75,6 +78,13 @@ void Renderer::Render()
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
+}
+
+void dae::Renderer::SwitchMode()
+{
+	const int amountOfModes{ 3 };
+	m_CameraMode = static_cast<CameraMode>((int(m_CameraMode) + 1) % amountOfModes);
+	std::cout << int(m_CameraMode) << std::endl;
 }
 
 void Renderer::IntroRender()const
@@ -426,12 +436,6 @@ void Renderer::Render_W1_5()
 		{
 			pxl++;
 			Vector2 pxlScr{ px + 0.5f, py + 0.5f };
-
-			////debug lines
-			//if (px > m_Width / 2 && py > m_Height / 2.5)
-			//{
-			//	std::cout << "het\n";
-			//}
 
 			//check for every triangle
 			for (size_t indc{ 0 }; indc < vector2_Screen.size(); indc += 3)
@@ -922,53 +926,56 @@ void dae::Renderer::Render_W2_2()
 
 void dae::Renderer::Render_W3_1()
 {
+	std::vector<Mesh> meshes_world{ Mesh{} };
+	meshes_world.reserve(1);
+	Utils::ParseOBJ("Resources/tuktuk.obj", meshes_world[0].vertices, meshes_world[0].indices);
 
-	//World Space
-	std::vector<Mesh> meshes_world
-	{
-		Mesh
-		{
-			{
-				Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-			},
-			{
-				3, 0, 4, 1, 5, 2,
-				2, 6,
-				6, 3, 7, 4, 8, 5
-			},
-			PrimitiveTopology::TriangleStrip,
-
-		},
-		Mesh
-		{
-			{
-				Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-			},
-			{
-				3, 0, 1,    1, 4, 3,    4, 1, 2,
-				2, 5, 4,    6, 3, 4,    4, 7, 6,
-				7, 4, 5,    5, 8, 7
-			},
-			PrimitiveTopology::TriangleList
-		}
-	};
-
+	////World Space
+	//std::vector<Mesh> meshes_world
+	//{
+	//	Mesh
+	//	{
+	//		{
+	//			Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+	//			Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+	//			Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+	//			Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+	//			Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+	//			Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+	//			Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+	//			Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+	//			Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+	//		},
+	//		{
+	//			3, 0, 4, 1, 5, 2,
+	//			2, 6,
+	//			6, 3, 7, 4, 8, 5
+	//		},
+	//		PrimitiveTopology::TriangleStrip,
+	//
+	//	},
+	//	Mesh
+	//	{
+	//		{
+	//			Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+	//			Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+	//			Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+	//			Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+	//			Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+	//			Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+	//			Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+	//			Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+	//			Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+	//		},
+	//		{
+	//			3, 0, 1,    1, 4, 3,    4, 1, 2,
+	//			2, 5, 4,    6, 3, 4,    4, 7, 6,
+	//			7, 4, 5,    5, 8, 7
+	//		},
+	//		PrimitiveTopology::TriangleList
+	//	}
+	//};
+	//
 	ColorRGB finalColor{ colors::Negative };
 
 	//////////////////////////////////////////////////////////////////////////////////
@@ -1050,6 +1057,7 @@ void dae::Renderer::Render_W3_1()
 						if (zBufferValue < 0.0f || zBufferValue > 1.0f)
 							continue;
 
+						//Compare with DepthBuffer
 						if (m_pDepthBufferPixels[pxl] > zBufferValue)
 						{
 							const float zInterpolated
@@ -1059,14 +1067,35 @@ void dae::Renderer::Render_W3_1()
 								+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].w)
 							) };
 
-							Vector2 uv{ (
-								  mesh.vertices[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].w
-								+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].w
-								+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].w
-								  ) * zInterpolated
-							};
+							//Color pixel depending on cameraMode
+							Vector2 uv{};
+							switch (m_CameraMode)
+							{
+							case CameraMode::Color:
+								finalColor = {
+									W0  * mesh.vertices[indc].color.r + W1 * mesh.vertices[indc + 1].color.r + W2 * mesh.vertices[indc + 2].color.r,
+									W0  * mesh.vertices[indc].color.g + W1 * mesh.vertices[indc + 1].color.g + W2 * mesh.vertices[indc + 2].color.g,
+									W0  * mesh.vertices[indc].color.b + W1 * mesh.vertices[indc + 1].color.b + W2 * mesh.vertices[indc + 2].color.b
 
-							finalColor = m_pTexture->Sample(uv);
+								};
+								break;
+							case CameraMode::UV:
+								uv = { (
+									  mesh.vertices[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].w
+									+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].w
+									+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].w
+									  ) * zInterpolated
+								};
+								finalColor = m_pTextureTuktuk->Sample(uv);
+								//finalColor = m_pTexture->Sample(uv);
+								break;
+							case CameraMode::Depth:
+								finalColor = { zBufferValue, zBufferValue, zBufferValue };
+								break;
+							default:
+								break;
+
+							}
 							m_pDepthBufferPixels[pxl] = zBufferValue;
 						}
 					}//end if pxl in triangle
