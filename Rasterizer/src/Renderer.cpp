@@ -926,56 +926,59 @@ void dae::Renderer::Render_W2_2()
 
 void dae::Renderer::Render_W3_1()
 {
-	std::vector<Mesh> meshes_world{ Mesh{} };
-	meshes_world.reserve(1);
-	Utils::ParseOBJ("Resources/tuktuk.obj", meshes_world[0].vertices, meshes_world[0].indices);
 
-	////World Space
-	//std::vector<Mesh> meshes_world
-	//{
-	//	Mesh
-	//	{
-	//		{
-	//			Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-	//			Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-	//			Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-	//			Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-	//			Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-	//			Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-	//			Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-	//			Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-	//			Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-	//		},
-	//		{
-	//			3, 0, 4, 1, 5, 2,
-	//			2, 6,
-	//			6, 3, 7, 4, 8, 5
-	//		},
-	//		PrimitiveTopology::TriangleStrip,
-	//
-	//	},
-	//	Mesh
-	//	{
-	//		{
-	//			Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-	//			Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-	//			Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-	//			Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-	//			Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-	//			Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-	//			Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-	//			Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-	//			Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-	//		},
-	//		{
-	//			3, 0, 1,    1, 4, 3,    4, 1, 2,
-	//			2, 5, 4,    6, 3, 4,    4, 7, 6,
-	//			7, 4, 5,    5, 8, 7
-	//		},
-	//		PrimitiveTopology::TriangleList
-	//	}
-	//};
-	//
+
+	//std::vector<Mesh> meshes_world{ Mesh{} };
+	//meshes_world.reserve(1);
+	//Utils::ParseOBJ("Resources/tuktuk.obj", meshes_world[0].vertices, meshes_world[0].indices);
+	//meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
+
+	//World Space
+	std::vector<Mesh> meshes_world
+	{
+		Mesh
+		{
+			{
+				Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 4, 1, 5, 2,
+				2, 6,
+				6, 3, 7, 4, 8, 5
+			},
+			PrimitiveTopology::TriangleStrip,
+	
+		},
+		Mesh
+		{
+			{
+				Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+			},
+			{
+				3, 0, 1,    1, 4, 3,    4, 1, 2,
+				2, 5, 4,    6, 3, 4,    4, 7, 6,
+				7, 4, 5,    5, 8, 7
+			},
+			PrimitiveTopology::TriangleList
+		}
+	};
+	
 	ColorRGB finalColor{ colors::Negative };
 
 	//////////////////////////////////////////////////////////////////////////////////
@@ -990,11 +993,7 @@ void dae::Renderer::Render_W3_1()
 		vertices_NDC.reserve(mesh.vertices.size());
 		ProjectionToNDC(mesh.vertices, vertices_NDC);
 
-		//NDC to RasterSpace
-		std::vector<Vector2> vector2_Screen{};
-		vector2_Screen.reserve(mesh.vertices.size());
-		VertectTransformToScreen(vertices_NDC, vector2_Screen);
-
+		
 		//////////////////////////////////////////////////////////////////////////
 		//loop through every triangle of current mesh
 		
@@ -1021,11 +1020,24 @@ void dae::Renderer::Render_W3_1()
 
 		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
 		{
+			//check if triangle is in frustom
+			if (vertices_NDC[indc].x < -1.0f || vertices_NDC[indc].x > 1.0f || vertices_NDC[indc + 1].x < -1.0f || vertices_NDC[indc + 1].x > 1.0f || vertices_NDC[indc +2 ].x < -1.0f || vertices_NDC[indc + 2].x > 1.0f ||
+				vertices_NDC[indc].y < -1.0f || vertices_NDC[indc].y > 1.0f || vertices_NDC[indc + 1].y < -1.0f || vertices_NDC[indc + 1].y > 1.0f || vertices_NDC[indc + 2].y < -1.0f || vertices_NDC[indc + 2].y > 1.0f ||
+				vertices_NDC[indc].z <    0  || vertices_NDC[indc].z > 1.0f || vertices_NDC[indc + 1].z <  0    || vertices_NDC[indc + 1].z > 1.0f || vertices_NDC[indc + 2].z < 0     || vertices_NDC[indc + 2].z > 1.0f   )
+				continue;
+				
+
+			//NDC to RasterSpace
+			std::vector<Vector2> vector2_Screen{};
+			vector2_Screen.reserve(mesh.vertices.size());
+			VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
+
 			//check bounds off current mesh
-			const int left  { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)), 0, m_Width) };
-			const int top   { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)), 0, m_Height) };
-			const int right { Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x)), 0, m_Width) };
-			const int bottom{ Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y)), 0, m_Height) };
+			const int left  { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) - 1), 0, m_Width) };
+			const int top   { Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y) - 1), 0, m_Height) };
+			const int right { Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) + 1), 0, m_Width) };
+			const int bottom{ Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y) + 1), 0, m_Height) };
 
 			//Check for every pxl if in current triangle
 			for (int px{ left }; px < right; ++px)
@@ -1076,7 +1088,6 @@ void dae::Renderer::Render_W3_1()
 									W0  * mesh.vertices[indc].color.r + W1 * mesh.vertices[indc + 1].color.r + W2 * mesh.vertices[indc + 2].color.r,
 									W0  * mesh.vertices[indc].color.g + W1 * mesh.vertices[indc + 1].color.g + W2 * mesh.vertices[indc + 2].color.g,
 									W0  * mesh.vertices[indc].color.b + W1 * mesh.vertices[indc + 1].color.b + W2 * mesh.vertices[indc + 2].color.b
-
 								};
 								break;
 							case CameraMode::UV:
@@ -1086,8 +1097,8 @@ void dae::Renderer::Render_W3_1()
 									+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].w
 									  ) * zInterpolated
 								};
-								finalColor = m_pTextureTuktuk->Sample(uv);
-								//finalColor = m_pTexture->Sample(uv);
+								//finalColor = m_pTextureTuktuk->Sample(uv);
+								finalColor = m_pTexture->Sample(uv);
 								break;
 							case CameraMode::Depth:
 								finalColor = { zBufferValue, zBufferValue, zBufferValue };

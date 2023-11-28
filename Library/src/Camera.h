@@ -54,14 +54,35 @@ namespace dae
 			//ONB => invViewMatrix
 			//Inverse(ONB) => ViewMatrix			
 
-			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
-			up = Vector3::Cross(forward, right).Normalized();
-			invViewMatrix = Matrix{ {right, 0}, {up, 0},
-				{forward, 0}, {origin, 1} };
-
-			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
+			////Works i guess
+			//right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
+			//up = Vector3::Cross(forward, right).Normalized();
+			//invViewMatrix = Matrix{ {right, 0}, {up, 0},
+			//	{forward, 0}, {origin, 1} };
+			//
+			//viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
 
 			
+			//__________________________________________
+			Matrix newRotion{
+					Matrix::CreateRotation({totalPitch, totalYaw, 0.f}) };
+			forward = newRotion.TransformVector(Vector3::UnitZ);
+			forward.Normalize();
+
+			//forward.Normalize();
+			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
+			up = Vector3::Cross(forward, right).Normalized();
+
+			invViewMatrix =
+			{
+					{		right   },
+					{		up		},
+					{		forward },
+					{		origin	}
+
+			};
+			viewMatrix = invViewMatrix.Inverse();
+
 			
 
 			//ViewMatrix => Matrix::CreateLookAtLH(...) [not implemented yet]
@@ -90,7 +111,7 @@ namespace dae
 			}
 
 			float
-				scrollSpeed{ 7.f },
+				scrollSpeed{ 10.f },
 				swipeSpeed{ 0.25f },
 				rotationSpeed{ 0.5f };
 
