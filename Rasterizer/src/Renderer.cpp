@@ -26,13 +26,17 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	ResetDepthBuffer();
 
 	//Initialize Camera
-	//m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
-	m_Camera.Initialize(60.f, { .0f, 5.0f,-30.f });
+	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
+	//m_Camera.Initialize(60.f, { .0f, 5.0f,-30.f });
 	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
 	m_pTexture  = Texture::LoadFromFile("Resources/uv_grid_2.png");
 	m_pTexture1 = Texture::LoadFromFile("Resources/uv_grid.png");
 	m_pTextureTuktuk = Texture::LoadFromFile("Resources/tuktuk.png");
 
+	m_Meshes_world.push_back( Mesh{} );
+	m_Meshes_world.reserve(1);
+	Utils::ParseOBJ("Resources/tuktuk.obj", m_Meshes_world[0].vertices, m_Meshes_world[0].indices);
+	m_Meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
 
 }
 
@@ -934,20 +938,20 @@ void dae::Renderer::Render_W3_1()
 	//meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
 
 	//World Space
-	std::vector<Mesh> meshes_world
+	std::vector<Mesh> m_Meshes_world
 	{
 		Mesh
 		{
 			{
-				Vertex{{-2,  2, -3}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 2,  2, -3}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-2,  0, -3}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, -3}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 2,  0, -3}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-2, -2, -3}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -2, -3}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 2, -2, -3}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+				Vertex{{-2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 1   }}
 			},
 			{
 				3, 0, 4, 1, 5, 2,
@@ -960,15 +964,15 @@ void dae::Renderer::Render_W3_1()
 		Mesh
 		{
 			{
-				Vertex{{-3,  3, 10}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 3,  3, 10}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-3,  0, 10}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, 10}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 3,  0, 10}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-3, -3, 10}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -3, 10}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 3, -3, 10}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+				Vertex{{-3,  3, 80}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+				Vertex{{ 0,  3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+				Vertex{{ 3,  3, 80}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+				Vertex{{-3,  0, 80}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+				Vertex{{ 0,  0, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+				Vertex{{ 3,  0, 80}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+				Vertex{{-3, -3, 80}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+				Vertex{{ 0, -3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+				Vertex{{ 3, -3, 80}, {0.0f, 1.f, 1.f}, {1   , 1   }}
 			},
 			{
 				3, 0, 1,    1, 4, 3,    4, 1, 2,
@@ -984,7 +988,7 @@ void dae::Renderer::Render_W3_1()
 	//////////////////////////////////////////////////////////////////////////////////
 	//Check every Mesh
 	/////////////////////////////////////////////////////////////////////////////////
-	for (Mesh& mesh : meshes_world)
+	for (Mesh& mesh : m_Meshes_world)
 	{
 		bool isColored{ false };//-> get value from depthBuffer if pixel is already colored  
 		
@@ -1021,9 +1025,9 @@ void dae::Renderer::Render_W3_1()
 		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
 		{
 			//check if triangle is in frustom
-			if (vertices_NDC[indc].x < -1.0f || vertices_NDC[indc].x > 1.0f || vertices_NDC[indc + 1].x < -1.0f || vertices_NDC[indc + 1].x > 1.0f || vertices_NDC[indc +2 ].x < -1.0f || vertices_NDC[indc + 2].x > 1.0f ||
-				vertices_NDC[indc].y < -1.0f || vertices_NDC[indc].y > 1.0f || vertices_NDC[indc + 1].y < -1.0f || vertices_NDC[indc + 1].y > 1.0f || vertices_NDC[indc + 2].y < -1.0f || vertices_NDC[indc + 2].y > 1.0f ||
-				vertices_NDC[indc].z <    0  || vertices_NDC[indc].z > 1.0f || vertices_NDC[indc + 1].z <  0    || vertices_NDC[indc + 1].z > 1.0f || vertices_NDC[indc + 2].z < 0     || vertices_NDC[indc + 2].z > 1.0f   )
+			if (vertices_NDC[mesh.indices[indc + 0]].x < -1.0f || vertices_NDC[mesh.indices[indc + 0]].x > 1.0f || vertices_NDC[mesh.indices[indc + 1]].x < -1.0f || vertices_NDC[mesh.indices[indc + 1]].x > 1.0f || vertices_NDC[mesh.indices[indc + 2]].x < -1.0f || vertices_NDC[mesh.indices[indc + 2]].x > 1.0f ||
+				vertices_NDC[mesh.indices[indc + 0]].y < -1.0f || vertices_NDC[mesh.indices[indc + 0]].y > 1.0f || vertices_NDC[mesh.indices[indc + 1]].y < -1.0f || vertices_NDC[mesh.indices[indc + 1]].y > 1.0f || vertices_NDC[mesh.indices[indc + 2]].y < -1.0f || vertices_NDC[mesh.indices[indc + 2]].y > 1.0f ||
+				vertices_NDC[mesh.indices[indc + 0]].z <    0  || vertices_NDC[mesh.indices[indc + 0]].z > 1.0f || vertices_NDC[mesh.indices[indc + 1]].z <  0    || vertices_NDC[mesh.indices[indc + 1]].z > 1.0f || vertices_NDC[mesh.indices[indc + 2]].z < 0     || vertices_NDC[mesh.indices[indc + 2]].z > 1.0f   )
 				continue;
 				
 

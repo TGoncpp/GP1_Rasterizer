@@ -57,6 +57,8 @@ namespace dae
 		int m_Width{};
 		int m_Height{};
 
+		std::vector<Mesh> m_Meshes_world;
+
 		enum class CameraMode
 		{
 			Depth,
