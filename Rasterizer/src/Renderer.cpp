@@ -7,6 +7,7 @@
 #include "Maths.h"
 #include "Texture.h"
 #include "Utils.h"
+#include "BRDFs.h"
 #include <iostream>
 #include <limits>
 
@@ -26,16 +27,16 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	ResetDepthBuffer();
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { .0f,.0f,-10.f });
-	//m_Camera.Initialize(60.f, { .0f, 5.0f,-30.f });
+	//m_Camera.Initialize(60.f, { .0f,.0f,-10.f });//for planes
+	m_Camera.Initialize(45.f, { .0f, 0.f,-0.f });//for tuktuk
 	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
-	m_pTexture  = Texture::LoadFromFile("Resources/uv_grid_2.png");
-	m_pTexture1 = Texture::LoadFromFile("Resources/uv_grid.png");
-	m_pTextureTuktuk = Texture::LoadFromFile("Resources/tuktuk.png");
+	m_pTexture           = Texture::LoadFromFile("Resources/uv_grid_2.png");
+	m_pTexture1          = Texture::LoadFromFile("Resources/uv_grid.png");
+	m_pTextureTuktuk     = Texture::LoadFromFile("Resources/tuktuk.png");
+	m_pTextureVehicle    = Texture::LoadFromFile("Resources/vehicle_diffuse.png");
 
 	m_Meshes_world.push_back( Mesh{} );
-	m_Meshes_world.reserve(1);
-	Utils::ParseOBJ("Resources/tuktuk.obj", m_Meshes_world[0].vertices, m_Meshes_world[0].indices);
+	Utils::ParseOBJ("Resources/vehicle.obj", m_Meshes_world[0].vertices, m_Meshes_world[0].indices);
 	m_Meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
 
 }
@@ -69,7 +70,8 @@ void Renderer::Render()
 	//Render_W1_5();
 	//Render_W2_1();
 	//Render_W2_2();
-	Render_W3_1();
+	//Render_W3_1();
+	Render_W4_1();
 
 	//@END
 	//Update SDL Surface
@@ -86,9 +88,18 @@ bool Renderer::SaveBufferToImage() const
 
 void dae::Renderer::SwitchMode()
 {
-	const int amountOfModes{ 3 };
-	m_CameraMode = static_cast<CameraMode>((int(m_CameraMode) + 1) % amountOfModes);
-	std::cout << int(m_CameraMode) << std::endl;
+	m_ShowDepthBuffer = !m_ShowDepthBuffer;
+}
+
+void dae::Renderer::SwitchLightMode()
+{
+	const int amountOfModes{ 4 };
+	m_LightMode = static_cast<LightingMode>((int(m_LightMode) + 1) % amountOfModes);
+	std::cout << "LightMode: oa/diffuse/specular/combined " << int(m_LightMode)  << std::endl;
+}
+
+void dae::Renderer::ToggleRotaion()
+{
 }
 
 void Renderer::IntroRender()const
@@ -930,13 +941,6 @@ void dae::Renderer::Render_W2_2()
 
 void dae::Renderer::Render_W3_1()
 {
-
-
-	//std::vector<Mesh> meshes_world{ Mesh{} };
-	//meshes_world.reserve(1);
-	//Utils::ParseOBJ("Resources/tuktuk.obj", meshes_world[0].vertices, meshes_world[0].indices);
-	//meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
-
 	//World Space
 	std::vector<Mesh> m_Meshes_world
 	{
@@ -995,9 +999,14 @@ void dae::Renderer::Render_W3_1()
 		//World to NDCSpace
 		std::vector<Vector4> vertices_NDC{};
 		vertices_NDC.reserve(mesh.vertices.size());
-		ProjectionToNDC(mesh.vertices, vertices_NDC);
+		ViewProjectionToNDC(mesh.vertices, vertices_NDC);
 
 		
+		//NDC to RasterSpace
+		std::vector<Vector2> vector2_Screen{};
+		vector2_Screen.reserve(mesh.vertices.size());
+		VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
 		//////////////////////////////////////////////////////////////////////////
 		//loop through every triangle of current mesh
 		
@@ -1030,11 +1039,6 @@ void dae::Renderer::Render_W3_1()
 				vertices_NDC[mesh.indices[indc + 0]].z <    0  || vertices_NDC[mesh.indices[indc + 0]].z > 1.0f || vertices_NDC[mesh.indices[indc + 1]].z <  0    || vertices_NDC[mesh.indices[indc + 1]].z > 1.0f || vertices_NDC[mesh.indices[indc + 2]].z < 0     || vertices_NDC[mesh.indices[indc + 2]].z > 1.0f   )
 				continue;
 				
-
-			//NDC to RasterSpace
-			std::vector<Vector2> vector2_Screen{};
-			vector2_Screen.reserve(mesh.vertices.size());
-			VertectTransformToScreen(vertices_NDC, vector2_Screen);
 
 
 			//check bounds off current mesh
@@ -1083,35 +1087,186 @@ void dae::Renderer::Render_W3_1()
 								+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].w)
 							) };
 
-							//Color pixel depending on cameraMode
-							Vector2 uv{};
-							switch (m_CameraMode)
+							//Color pixel depending on cameraMode							
+							float v = Remap(zBufferValue, 0.995f, 1.f);
+							
+							m_pDepthBufferPixels[pxl] = zBufferValue;
+						}
+					}//end if pxl in triangle
+
+					/////////////////////////////////////////////////////////////////////////////
+					//Update Color in Buffer for current mesh
+					/////////////////////////////////////////////////////////////////////////////
+					finalColor.MaxToOne();
+
+					if (finalColor == colors::Negative)
+						isColored = true;
+					else
+						isColored = false;
+
+					if (!isColored)
+					{
+						m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+							static_cast<uint8_t>(finalColor.r * 255),
+							static_cast<uint8_t>(finalColor.g * 255),
+							static_cast<uint8_t>(finalColor.b * 255));
+					}
+
+					//reset for next pxl
+					finalColor = colors::Negative;
+
+				}//end for py
+
+			}//end for px
+
+		}//end for each triangle
+
+	}//end for each Mesh
+	ResetDepthBuffer();
+}
+
+void dae::Renderer::Render_W4_1()
+{
+	
+	ColorRGB finalColor{ colors::Negative };
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//Check every Mesh
+	/////////////////////////////////////////////////////////////////////////////////
+	for (Mesh& mesh : m_Meshes_world)
+	{
+		bool isColored{ false };//-> get value from depthBuffer if pixel is already colored  
+
+		//World to NDCSpace
+		std::vector<Vertex_Out> vertices_NDC{};
+		vertices_NDC.reserve(mesh.vertices.size());
+		ViewProjectionToNDC(mesh.vertices, vertices_NDC);
+
+		//////////////////////////////////////////////////////////////////////////
+		//loop through every triangle of current mesh
+
+		//check triangleType and adjust loop variables 
+		int increment{};
+		int sizeReducer{};
+		bool invertEven{};
+		switch (mesh.primitiveTopology)
+		{
+		case PrimitiveTopology::TriangleList:
+			increment = 3;
+			sizeReducer = 0;
+			invertEven = false;
+			break;
+		case PrimitiveTopology::TriangleStrip:
+			increment = 1;
+			sizeReducer = 2;
+			invertEven = true;
+			break;
+		default:
+			std::cout << "invallid triangle type\n";
+			break;
+		}
+
+		for (size_t indc{ 0 }; indc < mesh.indices.size() - sizeReducer; indc += increment)
+		{
+			//check if triangle is in frustom
+			if (vertices_NDC[mesh.indices[indc + 0]].position.x < -1.0f || vertices_NDC[mesh.indices[indc + 0]].position.x > 1.0f || vertices_NDC[mesh.indices[indc + 1]].position.x < -1.0f || vertices_NDC[mesh.indices[indc + 1]].position.x > 1.0f || vertices_NDC[mesh.indices[indc + 2]].position.x < -1.0f || vertices_NDC[mesh.indices[indc + 2]].position.x > 1.0f ||
+				vertices_NDC[mesh.indices[indc + 0]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 0]].position.y > 1.0f || vertices_NDC[mesh.indices[indc + 1]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 1]].position.y > 1.0f || vertices_NDC[mesh.indices[indc + 2]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 2]].position.y > 1.0f ||
+				vertices_NDC[mesh.indices[indc + 0]].position.z < 0     || vertices_NDC[mesh.indices[indc + 0]].position.z > 1.0f || vertices_NDC[mesh.indices[indc + 1]].position.z < 0     || vertices_NDC[mesh.indices[indc + 1]].position.z > 1.0f || vertices_NDC[mesh.indices[indc + 2]].position.z < 0     || vertices_NDC[mesh.indices[indc + 2]].position.z > 1.0f)
+				continue;
+
+
+			//NDC to RasterSpace
+			std::vector<Vector2> vector2_Screen{};
+			vector2_Screen.reserve(mesh.vertices.size());
+			VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
+
+#pragma region BoundingBox
+			//check bounds off current triangle
+			const int left{ Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) - 1), 0, m_Width) };
+			const int top{ Clamp(int(std::min(std::min(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y) - 1), 0, m_Height) };
+			const int right{ Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].x, vector2_Screen[mesh.indices[indc + 1]].x), vector2_Screen[mesh.indices[indc + 2]].x) + 1), 0, m_Width) };
+			const int bottom{ Clamp(int(std::max(std::max(vector2_Screen[mesh.indices[indc + 0]].y, vector2_Screen[mesh.indices[indc + 1]].y), vector2_Screen[mesh.indices[indc + 2]].y) + 1), 0, m_Height) };
+#pragma endregion BoundingBox calulations
+
+			//Calculate area off current triangle and check if it is a line;
+			int inverter{ (invertEven && indc % 2 != 0) ? -1 : 1 };//invert Weights when using triangleStrips
+			const float W  = inverter * Vector2::Cross(vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 2]]);
+			if (W <= 0.0001f && W >= -0.0001f)continue;
+
+			//Check for every pxl off the boundingBox if in current triangle
+			for (int px{ left }; px < right; ++px)
+			{
+				for (int py{ top }; py < bottom; ++py)
+				{
+					//pixel position and index
+					int pxl{ px + py * m_Width };
+					Vector2 pxlScr{ px + 0.5f, py + 0.5f };
+
+					//Calculate total area off current triangle and the weight off every corner
+					const float W2 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 0]], vector2_Screen[mesh.indices[indc + 1]] - vector2_Screen[mesh.indices[indc + 0]]) / W;
+					const float W0 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 1]], vector2_Screen[mesh.indices[indc + 2]] - vector2_Screen[mesh.indices[indc + 1]]) / W;
+					const float W1 = inverter * Vector2::Cross(pxlScr - vector2_Screen[mesh.indices[indc + 2]], vector2_Screen[mesh.indices[indc + 0]] - vector2_Screen[mesh.indices[indc + 2]]) / W;
+
+					//if pxl in current triangle, check depth
+					if (W0 < 0.0f && W1 < 0.0f && W2 < 0.0f)
+					{
+						const float zBufferValue
+						{ -1.0f / (
+							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].position.z)
+							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].position.z)
+							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].position.z)
+						) };
+
+						//Compare with DepthBuffer
+						if (m_pDepthBufferPixels[pxl] > zBufferValue)
+						{
+							const float zInterpolated
+							{ 1.0f / (
+								  ((W0) / vertices_NDC[mesh.indices[indc + 0]].position.w)
+								+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].position.w)
+								+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].position.w)
+							) };
+
+							m_pDepthBufferPixels[pxl] = zBufferValue;
+
+
+							if (m_ShowDepthBuffer)
 							{
-							case CameraMode::Color:
-								finalColor = {
-									W0  * mesh.vertices[indc].color.r + W1 * mesh.vertices[indc + 1].color.r + W2 * mesh.vertices[indc + 2].color.r,
-									W0  * mesh.vertices[indc].color.g + W1 * mesh.vertices[indc + 1].color.g + W2 * mesh.vertices[indc + 2].color.g,
-									W0  * mesh.vertices[indc].color.b + W1 * mesh.vertices[indc + 1].color.b + W2 * mesh.vertices[indc + 2].color.b
-								};
-								break;
-							case CameraMode::UV:
-								uv = { (
-									  mesh.vertices[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].w
-									+ mesh.vertices[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].w
-									+ mesh.vertices[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].w
+								float v = Remap(zInterpolated, 0.995f, 1.f);
+								finalColor = { v,v,v };
+							}
+
+							//Interpolate vertex for shading
+							////////////////////////////////////////////////////////////////
+#pragma region Interpolatin 
+							Vertex_Out interpolatedVertex{};
+							interpolatedVertex.uv = { (
+									  vertices_NDC[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].position.w
+									+ vertices_NDC[mesh.indices[indc + 1]].uv * (W1) / vertices_NDC[mesh.indices[indc + 1]].position.w
+									+ vertices_NDC[mesh.indices[indc + 2]].uv * (W2) / vertices_NDC[mesh.indices[indc + 2]].position.w
 									  ) * zInterpolated
 								};
-								//finalColor = m_pTextureTuktuk->Sample(uv);
-								finalColor = m_pTexture->Sample(uv);
-								break;
-							case CameraMode::Depth:
-								finalColor = { zBufferValue, zBufferValue, zBufferValue };
-								break;
-							default:
-								break;
 
-							}
-							m_pDepthBufferPixels[pxl] = zBufferValue;
+							interpolatedVertex.normal = { (
+									  vertices_NDC[mesh.indices[indc + 0]].normal * (W0) / vertices_NDC[mesh.indices[indc + 0]].position.w
+									+ vertices_NDC[mesh.indices[indc + 1]].normal * (W1) / vertices_NDC[mesh.indices[indc + 1]].position.w
+									+ vertices_NDC[mesh.indices[indc + 2]].normal * (W2) / vertices_NDC[mesh.indices[indc + 2]].position.w
+									  ) * zInterpolated
+								};
+							interpolatedVertex.normal.Normalize();
+
+							interpolatedVertex.tangent = { (
+									  vertices_NDC[mesh.indices[indc + 0]].tangent * (W0) / vertices_NDC[mesh.indices[indc + 0]].position.w
+									+ vertices_NDC[mesh.indices[indc + 1]].tangent * (W1) / vertices_NDC[mesh.indices[indc + 1]].position.w
+									+ vertices_NDC[mesh.indices[indc + 2]].tangent * (W2) / vertices_NDC[mesh.indices[indc + 2]].position.w
+									  ) * zInterpolated
+								};
+							interpolatedVertex.tangent.Normalize();
+#pragma endregion Interpolatin 
+							
+
+							finalColor = ShadePxl(interpolatedVertex);
 						}
 					}//end if pxl in triangle
 
@@ -1220,7 +1375,7 @@ void Renderer::VertexTransformationFunction(const std::vector<Vertex>& vertices_
 
 }
 
-void dae::Renderer::ProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC)
+void dae::Renderer::ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC)
 {
 	const Matrix worldToNDC{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
 	for (const Vertex& vert : world)
@@ -1233,6 +1388,64 @@ void dae::Renderer::ProjectionToNDC(const std::vector<Vertex>& world, std::vecto
 
 		NDC.push_back(Vector4{ intermediate });
 	}
+}
+
+void dae::Renderer::ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vertex_Out>& NDC)
+{
+	const Matrix worldToNDC{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
+	for (int i{}; i < world.size(); ++i)
+	{
+		Vector4 intermediate = worldToNDC.TransformPoint(world[i].position.ToPoint4());
+		intermediate.x /= intermediate.w;
+		intermediate.y /= intermediate.w;
+		intermediate.z /= intermediate.w;
+		Vertex_Out ndc{ intermediate, world[i].color, world[i].uv, world[i].normal, world[i].tangent, world[i].viewDirection } ;
+
+		NDC.emplace_back(ndc);
+	}
+}
+
+float dae::Renderer::Remap(float v, float min, float max) const
+{
+	float result{ (v - min) / (max - min) };
+	return Clamp(result, 0.f, 1.f);
+}
+
+
+ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
+{
+	Vector3 lightDirection = { .577f, -.577f, .577f };
+	float lightIntensity{ 7.0f };
+	ColorRGB color{};
+
+	//cosine law
+	const float cosArea{ lightDirection.Dot(lightDirection, pxl.normal)  };
+
+	if (-cosArea < 0.0f)
+		return {};
+
+	switch (m_LightMode)
+	{
+	case LightingMode::ObservedArea:
+		color = ColorRGB(cosArea, cosArea, cosArea);
+		break;
+
+	case LightingMode::Diffuse:
+		color = m_pTextureVehicle->Sample(pxl.uv);
+		BRDF::Lambert(lightIntensity, color);
+		break;
+
+	case LightingMode::Specular:
+		break;
+
+	case LightingMode::Combined:
+		break;
+
+	default:
+		break;
+	}
+
+	return color;
 }
 
 void Renderer::VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const
@@ -1264,6 +1477,17 @@ void Renderer::VertectTransformToScreen(const std::vector<Vector4>& vertices_in,
 		Vector2 out{};
 		out.x = ((vertices_in[i].x + 1) / 2.0f) * static_cast<float> (m_Width);
 		out.y = ((1 - vertices_in[i].y) / 2.0f) * static_cast<float> (m_Height);
+		vertices_out.emplace_back(out);
+	}
+}
+
+void Renderer::VertectTransformToScreen(const std::vector<Vertex_Out>& vertices_in, std::vector<Vector2>& vertices_out) const
+{
+	for (int i{}; i < vertices_in.size(); ++i)
+	{
+		Vector2 out{};
+		out.x = ((vertices_in[i].position.x + 1) / 2.0f) * static_cast<float> (m_Width);
+		out.y = ((1 - vertices_in[i].position.y) / 2.0f) * static_cast<float> (m_Height);
 		vertices_out.emplace_back(out);
 	}
 }

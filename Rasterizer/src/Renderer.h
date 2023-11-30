@@ -33,14 +33,23 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 		void SwitchMode();
+		void SwitchLightMode();
+		void ToggleRotaion();
 
 	private:
 		void VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const;
 		void VertectTransformToScreen(const std::vector<Vertex>& vertices_in, std::vector<Vector2>& vertices_out) const;
 		void VertectTransformToScreen(const std::vector<Vector4>& vertices_in, std::vector<Vector2>& vertices_out) const;
+		void VertectTransformToScreen(const std::vector<Vertex_Out>& vertices_in, std::vector<Vector2>& vertices_out) const;
 
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
-		void ProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC) ;
+		void ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC) ;
+		void ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vertex_Out>& NDC) ;
+
+		float Remap(float v, float min, float max) const;
+		
+
+		ColorRGB ShadePxl(const Vertex_Out& pxl)const;
 
 		SDL_Window* m_pWindow{};
 
@@ -53,19 +62,22 @@ namespace dae
 		Texture* m_pTexture{};
 		Texture* m_pTexture1{};
 		Texture* m_pTextureTuktuk{};
+		Texture* m_pTextureVehicle{};
 
 		int m_Width{};
 		int m_Height{};
+		bool m_ShowDepthBuffer{ false };
 
 		std::vector<Mesh> m_Meshes_world;
 
-		enum class CameraMode
+		enum class LightingMode
 		{
-			Depth,
-			Color,
-			UV
+			ObservedArea, //Lambert Cosine Law
+			Diffuse,      //Scattering of the light
+			Specular,     // Incident Radiance
+			Combined      //ObservedArea * Radiance * BRDF
 		};
-		CameraMode m_CameraMode{ CameraMode::UV };
+		LightingMode m_LightMode{ LightingMode::ObservedArea };
 
 		void IntroRender()const;
 		void Render_W1_1()const;
@@ -78,6 +90,8 @@ namespace dae
 		void Render_W2_2();
 
 		void Render_W3_1();
+
+		void Render_W4_1();
 
 		void ResetDepthBuffer();
 		void ResetColorBuffer();
