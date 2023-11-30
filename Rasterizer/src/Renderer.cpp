@@ -27,17 +27,20 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	ResetDepthBuffer();
 
 	//Initialize Camera
-	//m_Camera.Initialize(60.f, { .0f,.0f,-10.f });//for planes
-	m_Camera.Initialize(45.f, { .0f, 0.f,-0.f });//for tuktuk
+	m_Camera.Initialize(45.f, { .0f, 0.f,-0.f });
 	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
+
+	//Init textures
 	m_pTexture           = Texture::LoadFromFile("Resources/uv_grid_2.png");
 	m_pTexture1          = Texture::LoadFromFile("Resources/uv_grid.png");
 	m_pTextureTuktuk     = Texture::LoadFromFile("Resources/tuktuk.png");
 	m_pTextureVehicle    = Texture::LoadFromFile("Resources/vehicle_diffuse.png");
 
+	//Init model
 	m_Meshes_world.push_back( Mesh{} );
 	Utils::ParseOBJ("Resources/vehicle.obj", m_Meshes_world[0].vertices, m_Meshes_world[0].indices);
 	m_Meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
+	m_Meshes_world[0].worldMatrix = Matrix::CreateTranslation({ 0.f, 0.f, 50.f });
 
 }
 
@@ -51,6 +54,14 @@ Renderer::~Renderer()
 
 void Renderer::Update(Timer* pTimer)
 {
+	if (m_Rotating)
+	{
+		//50 is offset position off model to world
+		const float rotationSpeed{ 50 * TO_RADIANS * pTimer->GetElapsed() };
+		m_AngleOfModel += rotationSpeed;
+		m_Meshes_world[0].worldMatrix = Matrix::CreateRotationY(m_AngleOfModel) * Matrix::CreateTranslation(0, 0, 50.f);
+	}
+
 	m_Camera.Update(pTimer);
 }
 
@@ -86,9 +97,9 @@ bool Renderer::SaveBufferToImage() const
 	return SDL_SaveBMP(m_pBackBuffer, "Rasterizer_ColorBuffer.bmp");
 }
 
-void dae::Renderer::SwitchMode()
+void dae::Renderer::ToggleRotation()
 {
-	m_ShowDepthBuffer = !m_ShowDepthBuffer;
+	m_Rotating = !m_Rotating;
 }
 
 void dae::Renderer::SwitchLightMode()
@@ -1140,7 +1151,7 @@ void dae::Renderer::Render_W4_1()
 		//World to NDCSpace
 		std::vector<Vertex_Out> vertices_NDC{};
 		vertices_NDC.reserve(mesh.vertices.size());
-		ViewProjectionToNDC(mesh.vertices, vertices_NDC);
+		ViewProjectionToNDC(mesh, vertices_NDC);
 
 		//NDC to RasterSpace
 		std::vector<Vector2> vector2_Screen{};
@@ -1390,16 +1401,19 @@ void dae::Renderer::ViewProjectionToNDC(const std::vector<Vertex>& world, std::v
 	}
 }
 
-void dae::Renderer::ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vertex_Out>& NDC)
+void dae::Renderer::ViewProjectionToNDC(const Mesh& world, std::vector<Vertex_Out>& NDC)
 {
-	const Matrix worldToNDC{ m_Camera.viewMatrix * m_Camera.projectionMatrix };
-	for (int i{}; i < world.size(); ++i)
+	const Matrix modelToNDC{ world.worldMatrix * m_Camera.viewMatrix * m_Camera.projectionMatrix };
+	auto modelSpace{ world.vertices };
+	for (int i{}; i < modelSpace.size(); ++i)
 	{
-		Vector4 intermediate = worldToNDC.TransformPoint(world[i].position.ToPoint4());
+		Vector4 intermediate = modelToNDC.TransformPoint(modelSpace[i].position.ToPoint4());
 		intermediate.x /= intermediate.w;
 		intermediate.y /= intermediate.w;
 		intermediate.z /= intermediate.w;
-		Vertex_Out ndc{ intermediate, world[i].color, world[i].uv, world[i].normal, world[i].tangent, world[i].viewDirection } ;
+
+		Vector3 normal{ world.worldMatrix.TransformVector( modelSpace[i].normal) };
+		Vertex_Out ndc{ intermediate, modelSpace[i].color, modelSpace[i].uv, normal, modelSpace[i].tangent, modelSpace[i].viewDirection } ;
 
 		NDC.emplace_back(ndc);
 	}
@@ -1433,7 +1447,6 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 	case LightingMode::Diffuse:
 		color = m_pTextureVehicle->Sample(pxl.uv);
 		color = BRDF::Lambert(lightIntensity, color);
-		 
 		break;
 
 	case LightingMode::Specular:

@@ -32,7 +32,7 @@ namespace dae
 		void Render();
 
 		bool SaveBufferToImage() const;
-		void SwitchMode();
+		void ToggleRotation();
 		void SwitchLightMode();
 		void ToggleRotaion();
 
@@ -44,7 +44,7 @@ namespace dae
 
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const;
 		void ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vector4>& NDC) ;
-		void ViewProjectionToNDC(const std::vector<Vertex>& world, std::vector<Vertex_Out>& NDC) ;
+		void ViewProjectionToNDC(const Mesh& world, std::vector<Vertex_Out>& NDC) ;
 
 		float Remap(float v, float min, float max) const;
 		
@@ -67,6 +67,8 @@ namespace dae
 		int m_Width{};
 		int m_Height{};
 		bool m_ShowDepthBuffer{ false };
+		bool m_Rotating{ true };
+		float m_AngleOfModel{ 0.0f };
 
 		std::vector<Mesh> m_Meshes_world;
 

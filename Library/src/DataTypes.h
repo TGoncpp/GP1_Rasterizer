@@ -37,6 +37,9 @@ namespace dae
 		PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };
 
 		std::vector<Vertex_Out> vertices_out{};
-		Matrix worldMatrix{};
+		Matrix worldMatrix{ {1,0,0,0},
+							 {0, 1, 0, 0},
+							 {0, 0, 1, 0},
+							 { 0,0,0,1 } };
 	};
 }
