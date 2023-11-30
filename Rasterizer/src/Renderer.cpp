@@ -1142,6 +1142,11 @@ void dae::Renderer::Render_W4_1()
 		vertices_NDC.reserve(mesh.vertices.size());
 		ViewProjectionToNDC(mesh.vertices, vertices_NDC);
 
+		//NDC to RasterSpace
+		std::vector<Vector2> vector2_Screen{};
+		vector2_Screen.reserve(mesh.vertices.size());
+		VertectTransformToScreen(vertices_NDC, vector2_Screen);
+
 		//////////////////////////////////////////////////////////////////////////
 		//loop through every triangle of current mesh
 
@@ -1173,13 +1178,7 @@ void dae::Renderer::Render_W4_1()
 				vertices_NDC[mesh.indices[indc + 0]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 0]].position.y > 1.0f || vertices_NDC[mesh.indices[indc + 1]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 1]].position.y > 1.0f || vertices_NDC[mesh.indices[indc + 2]].position.y < -1.0f || vertices_NDC[mesh.indices[indc + 2]].position.y > 1.0f ||
 				vertices_NDC[mesh.indices[indc + 0]].position.z < 0     || vertices_NDC[mesh.indices[indc + 0]].position.z > 1.0f || vertices_NDC[mesh.indices[indc + 1]].position.z < 0     || vertices_NDC[mesh.indices[indc + 1]].position.z > 1.0f || vertices_NDC[mesh.indices[indc + 2]].position.z < 0     || vertices_NDC[mesh.indices[indc + 2]].position.z > 1.0f)
 				continue;
-
-
-			//NDC to RasterSpace
-			std::vector<Vector2> vector2_Screen{};
-			vector2_Screen.reserve(mesh.vertices.size());
-			VertectTransformToScreen(vertices_NDC, vector2_Screen);
-
+			
 
 #pragma region BoundingBox
 			//check bounds off current triangle
@@ -1231,11 +1230,12 @@ void dae::Renderer::Render_W4_1()
 							m_pDepthBufferPixels[pxl] = zBufferValue;
 
 
-							if (m_ShowDepthBuffer)
-							{
-								float v = Remap(zInterpolated, 0.995f, 1.f);
-								finalColor = { v,v,v };
-							}
+							//if (m_ShowDepthBuffer)
+							//{
+							//	float v = Remap(zInterpolated, 0.995f, 1.f);
+							//	finalColor = { v,v,v };
+							//}
+
 
 							//Interpolate vertex for shading
 							////////////////////////////////////////////////////////////////
@@ -1419,9 +1419,9 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 	ColorRGB color{};
 
 	//cosine law
-	const float cosArea{ lightDirection.Dot(lightDirection, pxl.normal)  };
+	const float cosArea{ lightDirection.Dot(-lightDirection, pxl.normal)  };
 
-	if (-cosArea < 0.0f)
+	if (cosArea < 0.0f)
 		return {};
 
 	switch (m_LightMode)
@@ -1432,7 +1432,8 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 
 	case LightingMode::Diffuse:
 		color = m_pTextureVehicle->Sample(pxl.uv);
-		BRDF::Lambert(lightIntensity, color);
+		color = BRDF::Lambert(lightIntensity, color);
+		 
 		break;
 
 	case LightingMode::Specular:
