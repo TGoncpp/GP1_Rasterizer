@@ -32,15 +32,15 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 	//Init textures
 	m_pTexture           = Texture::LoadFromFile("Resources/uv_grid_2.png");
-	m_pTexture1          = Texture::LoadFromFile("Resources/uv_grid.png");
+	m_pTextureNormalMap  = Texture::LoadFromFile("Resources/vehicle_normal.png");
 	m_pTextureTuktuk     = Texture::LoadFromFile("Resources/tuktuk.png");
 	m_pTextureVehicle    = Texture::LoadFromFile("Resources/vehicle_diffuse.png");
 
 	//Init model
 	m_Meshes_world.push_back( Mesh{} );
 	Utils::ParseOBJ("Resources/vehicle.obj", m_Meshes_world[0].vertices, m_Meshes_world[0].indices);
-	m_Meshes_world[0].primitiveTopology = PrimitiveTopology::TriangleList;
-	m_Meshes_world[0].worldMatrix = Matrix::CreateTranslation({ 0.f, 0.f, 50.f });
+	m_Meshes_world[0].primitiveTopology          = PrimitiveTopology::TriangleList;
+	m_Meshes_world[0].worldMatrix                = Matrix::CreateTranslation({ 0.f, 0.f, 50.f });
 
 }
 
@@ -48,8 +48,9 @@ Renderer::~Renderer()
 {
 	delete[] m_pDepthBufferPixels;
 	delete m_pTexture;
-	delete m_pTexture1;
+	delete m_pTextureNormalMap;
 	delete m_pTextureTuktuk;
+	delete m_pTextureVehicle;
 }
 
 void Renderer::Update(Timer* pTimer)
@@ -109,9 +110,11 @@ void dae::Renderer::SwitchLightMode()
 	std::cout << "LightMode: oa/diffuse/specular/combined " << int(m_LightMode)  << std::endl;
 }
 
-void dae::Renderer::ToggleRotaion()
+void dae::Renderer::ToggleNormal()
 {
+	m_UseNormalMap = !m_UseNormalMap;
 }
+
 
 void Renderer::IntroRender()const
 {
@@ -661,7 +664,7 @@ void dae::Renderer::Render_W2_1()
 									  ) * zInterpolated
 								};
 								
-								finalColor = m_pTexture1->Sample(uv);			
+								finalColor = m_pTextureNormalMap->Sample(uv);			
 								m_pDepthBufferPixels[pxl] = avgDepth;
 							}
 							
@@ -1241,13 +1244,6 @@ void dae::Renderer::Render_W4_1()
 							m_pDepthBufferPixels[pxl] = zBufferValue;
 
 
-							//if (m_ShowDepthBuffer)
-							//{
-							//	float v = Remap(zInterpolated, 0.995f, 1.f);
-							//	finalColor = { v,v,v };
-							//}
-
-
 							//Interpolate vertex for shading
 							////////////////////////////////////////////////////////////////
 #pragma region Interpolatin 
@@ -1428,20 +1424,45 @@ float dae::Renderer::Remap(float v, float min, float max) const
 
 ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 {
+	//Calculate observed area, if negative break
 	Vector3 lightDirection = { .577f, -.577f, .577f };
-	float lightIntensity{ 7.0f };
-	ColorRGB color{};
 
-	//cosine law
-	const float cosArea{ lightDirection.Dot(-lightDirection, pxl.normal)  };
+	float
+		lightIntensity{ 7.0f },
+		cosArea{};
+	Vector3
+		normalValue{},
+		normalVector{};
+	ColorRGB
+		color{  };
 
-	if (cosArea < 0.0f)
-		return {};
+	//Calculate normalmaps
+	if (m_UseNormalMap)
+	{
+		Vector3 biNormal{ Vector3::Cross(pxl.normal, pxl.tangent) };
+		Matrix tangentSpaceAxis = Matrix{ pxl.tangent, biNormal, pxl.normal,Vector3::Zero };
+		normalVector = m_pTextureNormalMap->SampleNormal(pxl.uv);
+		normalValue  = tangentSpaceAxis.TransformVector(normalVector);
+							
+		//Calculate observerd area, return if negative
+		cosArea = lightDirection.Dot(-lightDirection, normalValue) ;
+		if (cosArea < 0.0f)
+			return {};
+	
+	}
+	else
+	{
+		cosArea = lightDirection.Dot(-lightDirection, pxl.normal) ;
+		if (cosArea < 0.0f)
+			return {};
+	}
+	
+
 
 	switch (m_LightMode)
 	{
 	case LightingMode::ObservedArea:
-		color = ColorRGB(cosArea, cosArea, cosArea);
+		color = ColorRGB(cosArea, cosArea, cosArea) ;
 		break;
 
 	case LightingMode::Diffuse:

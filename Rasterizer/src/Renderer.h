@@ -34,7 +34,7 @@ namespace dae
 		bool SaveBufferToImage() const;
 		void ToggleRotation();
 		void SwitchLightMode();
-		void ToggleRotaion();
+		void ToggleNormal();
 
 	private:
 		void VertectTransformToScreen(const std::vector<Vector3>& vertices_in, std::vector<Vector2>& vertices_out) const;
@@ -60,13 +60,13 @@ namespace dae
 
 		Camera m_Camera{};
 		Texture* m_pTexture{};
-		Texture* m_pTexture1{};
+		Texture* m_pTextureNormalMap{};
 		Texture* m_pTextureTuktuk{};
 		Texture* m_pTextureVehicle{};
 
 		int m_Width{};
 		int m_Height{};
-		bool m_ShowDepthBuffer{ false };
+		bool m_UseNormalMap{ true };
 		bool m_Rotating{ true };
 		float m_AngleOfModel{ 0.0f };
 

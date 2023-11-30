@@ -6,6 +6,7 @@
 namespace dae
 {
 	struct Vector2;
+	struct Vector3;
 
 	class Texture
 	{
@@ -14,6 +15,8 @@ namespace dae
 
 		static Texture* LoadFromFile(const std::string& path);
 		ColorRGB Sample(const Vector2& uv) const;
+		//return value in [-1, 1]
+		Vector3 SampleNormal(const Vector2& uv) const;
 
 	private:
 		Texture(SDL_Surface* pSurface);

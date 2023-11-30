@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include "Vector2.h"
+#include "Vector3.h"
 #include <SDL_image.h>
 
 namespace dae
@@ -54,5 +55,11 @@ namespace dae
 		SDL_GetRGB(m_pSurfacePixels[pxl], m_pSurface->format, &r, &g, &b);
 
 		return { ColorRGB{(float)r, (float)g, (float)b}/ 255.0f };
+	}
+	Vector3 Texture::SampleNormal(const Vector2& uv) const
+	{
+		ColorRGB c = Sample(uv);
+
+		return Vector3(c.r * 2.0f -1.0f, c.g * 2.0f - 1.0f, c.b *2.0f - 1.0f);
 	}
 }
