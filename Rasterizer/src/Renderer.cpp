@@ -27,14 +27,15 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	ResetDepthBuffer();
 
 	//Initialize Camera
-	m_Camera.Initialize(45.f, { .0f, 0.f,-0.f });
+	m_Camera.Initialize(45.f, { .0f, 5.f, 64.f });
 	m_Camera.SetAspectRatio(float(m_Width) / m_Height);
 
 	//Init textures
-	m_pTexture           = Texture::LoadFromFile("Resources/uv_grid_2.png");
-	m_pTextureNormalMap  = Texture::LoadFromFile("Resources/vehicle_normal.png");
-	m_pTextureTuktuk     = Texture::LoadFromFile("Resources/tuktuk.png");
-	m_pTextureVehicle    = Texture::LoadFromFile("Resources/vehicle_diffuse.png");
+	m_pTexture              = Texture::LoadFromFile("Resources/tuktuk.png");
+	m_pTextureNormalMap     = Texture::LoadFromFile("Resources/vehicle_normal.png");
+	m_pTextureGlossines     = Texture::LoadFromFile("Resources/vehicle_gloss.png");
+	m_pTextureSpecular      = Texture::LoadFromFile("Resources/vehicle_specular.png");
+	m_pTextureVehicle       = Texture::LoadFromFile("Resources/vehicle_diffuse.png");
 
 	//Init model
 	m_Meshes_world.push_back( Mesh{} );
@@ -49,7 +50,8 @@ Renderer::~Renderer()
 	delete[] m_pDepthBufferPixels;
 	delete m_pTexture;
 	delete m_pTextureNormalMap;
-	delete m_pTextureTuktuk;
+	delete m_pTextureGlossines;
+	delete m_pTextureSpecular;
 	delete m_pTextureVehicle;
 }
 
@@ -58,7 +60,7 @@ void Renderer::Update(Timer* pTimer)
 	if (m_Rotating)
 	{
 		//50 is offset position off model to world
-		const float rotationSpeed{ 50 * TO_RADIANS * pTimer->GetElapsed() };
+		const float rotationSpeed{ pTimer->GetElapsed() };
 		m_AngleOfModel += rotationSpeed;
 		m_Meshes_world[0].worldMatrix = Matrix::CreateRotationY(m_AngleOfModel) * Matrix::CreateTranslation(0, 0, 50.f);
 	}
@@ -955,51 +957,51 @@ void dae::Renderer::Render_W2_2()
 
 void dae::Renderer::Render_W3_1()
 {
-	//World Space
-	std::vector<Mesh> m_Meshes_world
-	{
-		Mesh
-		{
-			{
-				Vertex{{-2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-			},
-			{
-				3, 0, 4, 1, 5, 2,
-				2, 6,
-				6, 3, 7, 4, 8, 5
-			},
-			PrimitiveTopology::TriangleStrip,
-	
-		},
-		Mesh
-		{
-			{
-				Vertex{{-3,  3, 80}, {0.0f, 1.f, 1.f}, {0   , 0   }},
-				Vertex{{ 0,  3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
-				Vertex{{ 3,  3, 80}, {0.0f, 1.f, 1.f}, {1   , 0   }},
-				Vertex{{-3,  0, 80}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
-				Vertex{{ 0,  0, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
-				Vertex{{ 3,  0, 80}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
-				Vertex{{-3, -3, 80}, {0.0f, 1.f, 1.f}, {0   , 1   }},
-				Vertex{{ 0, -3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
-				Vertex{{ 3, -3, 80}, {0.0f, 1.f, 1.f}, {1   , 1   }}
-			},
-			{
-				3, 0, 1,    1, 4, 3,    4, 1, 2,
-				2, 5, 4,    6, 3, 4,    4, 7, 6,
-				7, 4, 5,    5, 8, 7
-			},
-			PrimitiveTopology::TriangleList
-		}
-	};
+	////World Space
+	//std::vector<Mesh> m_Meshes_world
+	//{
+	//	Mesh
+	//	{
+	//		{
+	//			Vertex{{-2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+	//			Vertex{{ 0,  2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+	//			Vertex{{ 2,  2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+	//			Vertex{{-2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+	//			Vertex{{ 0,  0, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+	//			Vertex{{ 2,  0, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+	//			Vertex{{-2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+	//			Vertex{{ 0, -2, -1.0f}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+	//			Vertex{{ 2, -2, -1.0f}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+	//		},
+	//		{
+	//			3, 0, 4, 1, 5, 2,
+	//			2, 6,
+	//			6, 3, 7, 4, 8, 5
+	//		},
+	//		PrimitiveTopology::TriangleStrip,
+	//
+	//	},
+	//	Mesh
+	//	{
+	//		{
+	//			Vertex{{-3,  3, 80}, {0.0f, 1.f, 1.f}, {0   , 0   }},
+	//			Vertex{{ 0,  3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0   }},
+	//			Vertex{{ 3,  3, 80}, {0.0f, 1.f, 1.f}, {1   , 0   }},
+	//			Vertex{{-3,  0, 80}, {0.0f, 1.f, 1.f}, {0   , 0.5f}},
+	//			Vertex{{ 0,  0, 80}, {0.0f, 1.f, 1.f}, {0.5f, 0.5f}},
+	//			Vertex{{ 3,  0, 80}, {0.0f, 1.f, 1.f}, {1   , 0.5f}},
+	//			Vertex{{-3, -3, 80}, {0.0f, 1.f, 1.f}, {0   , 1   }},
+	//			Vertex{{ 0, -3, 80}, {0.0f, 1.f, 1.f}, {0.5f, 1   }},
+	//			Vertex{{ 3, -3, 80}, {0.0f, 1.f, 1.f}, {1   , 1   }}
+	//		},
+	//		{
+	//			3, 0, 1,    1, 4, 3,    4, 1, 2,
+	//			2, 5, 4,    6, 3, 4,    4, 7, 6,
+	//			7, 4, 5,    5, 8, 7
+	//		},
+	//		PrimitiveTopology::TriangleList
+	//	}
+	//};
 	
 	ColorRGB finalColor{ colors::Negative };
 
@@ -1226,9 +1228,9 @@ void dae::Renderer::Render_W4_1()
 					{
 						const float zBufferValue
 						{ -1.0f / (
-							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].position.z)
-							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].position.z)
-							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].position.z)
+							  ((W0) / vertices_NDC[mesh.indices[indc + 0]].position.w)
+							+ ((W1) / vertices_NDC[mesh.indices[indc + 1]].position.w)
+							+ ((W2) / vertices_NDC[mesh.indices[indc + 2]].position.w)
 						) };
 
 						//Compare with DepthBuffer
@@ -1243,10 +1245,12 @@ void dae::Renderer::Render_W4_1()
 
 							m_pDepthBufferPixels[pxl] = zBufferValue;
 
+							//-----------------------------------------------------------------------------
+
 
 							//Interpolate vertex for shading
 							////////////////////////////////////////////////////////////////
-#pragma region Interpolatin 
+#pragma region Interpolation 
 							Vertex_Out interpolatedVertex{};
 							interpolatedVertex.uv = { (
 									  vertices_NDC[mesh.indices[indc + 0]].uv * (W0) / vertices_NDC[mesh.indices[indc + 0]].position.w
@@ -1270,6 +1274,14 @@ void dae::Renderer::Render_W4_1()
 									  ) * zInterpolated
 								};
 							interpolatedVertex.tangent.Normalize();
+
+							interpolatedVertex.viewDirection = { (
+									  vertices_NDC[mesh.indices[indc + 0]].viewDirection* (W0) / vertices_NDC[mesh.indices[indc + 0]].position.w
+									+ vertices_NDC[mesh.indices[indc + 1]].viewDirection * (W1) / vertices_NDC[mesh.indices[indc + 1]].position.w
+									+ vertices_NDC[mesh.indices[indc + 2]].viewDirection * (W2) / vertices_NDC[mesh.indices[indc + 2]].position.w
+									  ) * zInterpolated
+							};
+							interpolatedVertex.viewDirection.Normalize();
 #pragma endregion Interpolatin 
 							
 
@@ -1408,8 +1420,10 @@ void dae::Renderer::ViewProjectionToNDC(const Mesh& world, std::vector<Vertex_Ou
 		intermediate.y /= intermediate.w;
 		intermediate.z /= intermediate.w;
 
-		Vector3 normal{ world.worldMatrix.TransformVector( modelSpace[i].normal) };
-		Vertex_Out ndc{ intermediate, modelSpace[i].color, modelSpace[i].uv, normal, modelSpace[i].tangent, modelSpace[i].viewDirection } ;
+		Vector3 normal{ (world.worldMatrix.TransformVector(modelSpace[i].normal)).Normalized()};
+		Vector3 tangent{ (world.worldMatrix.TransformVector(modelSpace[i].tangent)).Normalized()};
+		Vector3 viewDir{ (world.worldMatrix.TransformVector(modelSpace[i].position) - m_Camera.origin).Normalized()};
+		Vertex_Out ndc{ intermediate, modelSpace[i].color, modelSpace[i].uv, normal, tangent, viewDir } ;
 
 		NDC.emplace_back(ndc);
 	}
@@ -1425,7 +1439,8 @@ float dae::Renderer::Remap(float v, float min, float max) const
 ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 {
 	//Calculate observed area, if negative break
-	Vector3 lightDirection = { .577f, -.577f, .577f };
+	const Vector3 lightDirection = { .577f, -.577f, .577f };
+
 
 	float
 		lightIntensity{ 7.0f },
@@ -1434,15 +1449,16 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 		normalValue{},
 		normalVector{};
 	ColorRGB
+		Ambient{.025f, .025f, .025f},
 		color{  };
 
 	//Calculate normalmaps
 	if (m_UseNormalMap)
 	{
-		Vector3 biNormal{ Vector3::Cross(pxl.normal, pxl.tangent) };
+		Vector3 biNormal        { Vector3::Cross(pxl.normal, pxl.tangent) };
 		Matrix tangentSpaceAxis = Matrix{ pxl.tangent, biNormal, pxl.normal,Vector3::Zero };
-		normalVector = m_pTextureNormalMap->SampleNormal(pxl.uv);
-		normalValue  = tangentSpaceAxis.TransformVector(normalVector);
+		normalVector            = m_pTextureNormalMap->SampleNormal(pxl.uv);
+		normalValue             = tangentSpaceAxis.TransformVector(normalVector);
 							
 		//Calculate observerd area, return if negative
 		cosArea = lightDirection.Dot(-lightDirection, normalValue) ;
@@ -1452,13 +1468,20 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 	}
 	else
 	{
-		cosArea = lightDirection.Dot(-lightDirection, pxl.normal) ;
+		normalValue = pxl.normal;
+		cosArea     = lightDirection.Dot(-lightDirection, pxl.normal) ;
 		if (cosArea < 0.0f)
 			return {};
 	}
+
+	const float shininess            { 25.f };
+	const Vector3 ambient			 { 0.25f, 0.25f, 0.25f };
+	const float GlossMapValue        { m_pTextureGlossines->SampleFloat(pxl.uv)  * shininess };
+	const ColorRGB specularMapValue  { m_pTextureSpecular->Sample(pxl.uv) };
+	const ColorRGB diffuseMap        { m_pTextureVehicle->Sample(pxl.uv) };
+	const ColorRGB diffuseColor      { BRDF::Lambert(lightIntensity, diffuseMap) };
+		
 	
-
-
 	switch (m_LightMode)
 	{
 	case LightingMode::ObservedArea:
@@ -1466,14 +1489,15 @@ ColorRGB dae::Renderer::ShadePxl(const Vertex_Out& pxl) const
 		break;
 
 	case LightingMode::Diffuse:
-		color = m_pTextureVehicle->Sample(pxl.uv);
-		color = BRDF::Lambert(lightIntensity, color);
+		color = diffuseColor* cosArea;
 		break;
 
 	case LightingMode::Specular:
+		color =  BRDF::Phong(specularMapValue, GlossMapValue, lightDirection, -pxl.viewDirection, normalValue) * cosArea;
 		break;
 
 	case LightingMode::Combined:
+		color = (diffuseColor + BRDF::Phong(specularMapValue, GlossMapValue, lightDirection, -pxl.viewDirection, normalValue)) * cosArea;
 		break;
 
 	default:

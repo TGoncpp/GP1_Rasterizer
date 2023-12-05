@@ -17,6 +17,8 @@ namespace dae
 		ColorRGB Sample(const Vector2& uv) const;
 		//return value in [-1, 1]
 		Vector3 SampleNormal(const Vector2& uv) const;
+		//return 1 off the components as a float
+		float SampleFloat(const Vector2& uv) const;
 
 	private:
 		Texture(SDL_Surface* pSurface);

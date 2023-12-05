@@ -42,6 +42,15 @@ namespace dae
 			return {value, value, value};
 		}
 
+		static ColorRGB Phong(const ColorRGB& ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
+		{
+			const Vector3& reflect{ v.Reflect(l, n).Normalized()};
+			const float cosAlp{ std::max(0.f, v.Dot(reflect, v))};
+			if (cosAlp <= 0.f) return { 0.f, 0.f, 0.f };
+			const ColorRGB value{ ks * powf(cosAlp , exp) };
+			return value;
+		}
+
 		/**
 		 * \brief BRDF Fresnel Function >> Schlick
 		 * \param h Normalized Halfvector between View and Light directions

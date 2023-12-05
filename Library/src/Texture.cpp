@@ -62,4 +62,11 @@ namespace dae
 
 		return Vector3(c.r * 2.0f -1.0f, c.g * 2.0f - 1.0f, c.b *2.0f - 1.0f);
 	}
+
+	float Texture::SampleFloat(const Vector2& uv) const
+	{
+		ColorRGB c = Sample(uv);
+
+		return c.r;
+	}
 }

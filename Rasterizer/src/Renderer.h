@@ -61,8 +61,10 @@ namespace dae
 		Camera m_Camera{};
 		Texture* m_pTexture{};
 		Texture* m_pTextureNormalMap{};
-		Texture* m_pTextureTuktuk{};
+		Texture* m_pTextureGlossines{};
 		Texture* m_pTextureVehicle{};
+		Texture* m_pTextureSpecular{};
+
 
 		int m_Width{};
 		int m_Height{};
